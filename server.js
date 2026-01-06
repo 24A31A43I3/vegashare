@@ -117,10 +117,25 @@ app.get('/api/get-item', async (req, res) => {
   }
 });
 
-// --- 6. Catch-all Middleware (Express 5 Compatibility) ---
-// Using middleware fallback instead of wildcard strings to avoid PathError
+// --- 6. Route & Error Handling (Express 5 Compatibility) ---
+
+// A. Serve specific legal pages first so they don't trigger 404
+app.get('/privacy', (req, res) => res.sendFile(path.join(__dirname, 'privacy.html')));
+app.get('/terms', (req, res) => res.sendFile(path.join(__dirname, 'terms.html')));
+
+// B. Custom 404 Handler 
+// We place this BEFORE the index.html fallback for specific invalid file requests
+app.use((req, res, next) => {
+    // If the request is for a file that doesn't exist (like a broken image or .php scan)
+    if (req.accepts('html') && !req.url.startsWith('/api')) {
+        return res.status(404).sendFile(path.join(__dirname, '404.html'));
+    }
+    next();
+});
+
+// C. Final Fallback (Main Application)
 app.use((req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // --- 7. Start Server ---
