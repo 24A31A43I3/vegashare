@@ -6,23 +6,20 @@ const cors = require('cors');
 const path = require('path');
 
 const app = express();
-// Render automatically assigns a PORT; defaults to 3000 locally
 const PORT = process.env.PORT || 3000;
 
 // --- 1. Middleware ---
 app.use(cors());
 app.use(express.json());
-// Serves static files (index.html, style.css, script.js) from the root directory
+// Serves static files from the root directory
 app.use(express.static(path.join(__dirname)));
 
 // --- 2. MongoDB Connection ---
-// Uses the MONGO_URI environment variable for security
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ Connected to MongoDB'))
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
 // --- 3. Schema Setup ---
-// Data automatically expires and deletes after 30 minutes via TTL index
 const itemSchema = new mongoose.Schema({
   code: { type: String, required: true, unique: true },
   type: { type: String, required: true, enum: ['text', 'file'] },
@@ -35,7 +32,7 @@ const itemSchema = new mongoose.Schema({
 
 const Item = mongoose.model('Item', itemSchema);
 
-// --- 4. Multer Configuration (15MB Limit) ---
+// --- 4. Multer Configuration ---
 const upload = multer({ 
   storage: multer.memoryStorage(),
   limits: { fileSize: 15 * 1024 * 1024 } 
@@ -55,11 +52,7 @@ async function generateUniqueCode() {
 
 // --- 5. API Routes ---
 
-/**
- * PING ENDPOINT
- * Use this URL (https://vegashare.onrender.com/ping) with an external 
- * service like Cron-job.org to prevent the server from sleeping.
- */
+// Keep-alive endpoint for UptimeRobot
 app.get('/ping', (req, res) => {
   res.status(200).send('pong');
 });
@@ -125,7 +118,7 @@ app.get('/api/get-item', async (req, res) => {
 });
 
 // --- 6. Catch-all Middleware (Express 5 Compatibility) ---
-// This fallback handles SPA routing and serves index.html for unknown paths.
+// Using middleware fallback instead of wildcard strings to avoid PathError
 app.use((req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
