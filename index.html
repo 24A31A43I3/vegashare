@@ -1,23 +1,22 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <title>VegaShare | Secure Anonymous File & Text Sharing</title>
-    <meta name="title" content="VegaShare | Secure Anonymous File & Text Sharing" />
-    <meta name="description" content="Share files and text anonymously with a secure 4-digit code. Fast, encrypted, and temporary peer-to-peer sharing via VegaShare. No account required.">
-    <meta name="keywords" content="anonymous file sharing, secure clipboard, share text online, temporary file storage, VegaShare, encrypted sharing">
-    <meta name="robots" content="index, follow">
+    <meta name="description" content="Anonymously share files and text using a 4-digit code. Secure, temporary, and no account required.">
+    <meta name="keywords" content="anonymous sharing, secure transfer, temporary file storage, 4-digit code sharing">
     <link rel="canonical" href="https://vegashare.onrender.com/">
 
-    <meta property="og:type" content="website">
+    <meta property="og:title" content="VegaShare | Secure Anonymous Sharing">
+    <meta property="og:description" content="Share files and text securely with a temporary 4-digit code.">
     <meta property="og:url" content="https://vegashare.onrender.com/">
-    <meta property="og:title" content="VegaShare | Secure Anonymous File & Text Sharing">
-    <meta property="og:description" content="Transfer files and text instantly using a 4-digit code. No registration, total anonymity.">
-    <meta property="og:image" content="https://vegashare.onrender.com/og-image.png"> 
+    <meta property="og:type" content="website">
 
-    <script type='text/javascript' src='//pl25838030.highratecpm.com/de/a3/9a/dea39a4897f9106c6276063901235698.js' async></script>
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://pl28415826.effectivegatecpm.com/07/db/b2/07dbb23d33bda2d47f4cd70aa10eee75.js"></script>
 
     <script type="application/ld+json">
     {
@@ -37,137 +36,117 @@
     </script>
 
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
-    <link rel="stylesheet" href="/style.css" />
-  </head>
-  <body>
-    <script type='text/javascript' src='//theislande.com/tag.min.js' data-zone='YOUR_ADSTERRA_ZONE_ID_HERE' async></script>
+</head>
+<body>
 
-    <div id="app">
-      <main class="container">
+    <div class="container">
         <header class="header">
-          <h1>VegaShare</h1>
-          <p class="subtitle">Securely share files and text anonymously with a temporary 4-digit code</p>
-          
-          <div id="ad-banner-top" style="margin-top: 20px; text-align: center;">
-             </div>
+            <h1>VegaShare</h1>
+            <p class="subtitle">Securely share items with a temporary 4-digit code</p>
         </header>
 
-        <section class="card" aria-label="File Transfer Interface">
-          <nav class="tabs" role="tablist">
-            <button class="tab-button active" data-tab="send" role="tab" aria-selected="true">
-              <svg class="tab-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="17 8 12 3 7 8"></polyline>
-                <line x1="12" y1="3" x2="12" y2="15"></line>
-              </svg>
-              Send Item
-            </button>
-            <button class="tab-button" data-tab="receive" role="tab" aria-selected="false">
-              <svg class="tab-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7 10 12 15 17 10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
-              </svg>
-              Receive Item
-            </button>
-          </nav>
+        <main class="card">
+            <nav class="tabs">
+                <button class="tab-button active" data-tab="send">
+                    <span>📤</span> Send Item
+                </button>
+                <button class="tab-button" data-tab="receive">
+                    <span>📥</span> Receive Item
+                </button>
+            </nav>
 
-          <article class="tab-content active" id="send-tab" role="tabpanel">
-            <div class="form-section">
-              <label for="text-input">Paste Text to Share</label>
-              <textarea id="text-input" placeholder="Paste your text or notes here..." rows="6"></textarea>
-            </div>
+            <section class="tab-content active" id="send-tab">
+                <div class="form-section">
+                    <label for="text-input">Share Text</label>
+                    <textarea id="text-input" placeholder="Enter text here..." rows="5"></textarea>
+                </div>
 
-            <div class="divider"><span>OR</span></div>
+                <div class="divider">
+                    <span>OR</span>
+                </div>
 
-            <div class="form-section">
-              <label for="file-input">Upload Secure File (Max 15MB)</label>
-              <div class="file-input-wrapper">
-                <input type="file" id="file-input" accept="*/*" aria-describedby="file-label" />
-                <label for="file-input" class="file-input-label">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="17 8 12 3 7 8"></polyline>
-                    <line x1="12" y1="3" x2="12" y2="15"></line>
-                  </svg>
-                  <span id="file-label">Choose a file to upload</span>
-                </label>
-              </div>
-            </div>
+                <div class="form-section">
+                    <label>Share File</label>
+                    <label for="file-input" class="file-input-label">
+                        <span id="file-label">Click to choose a file</span>
+                    </label>
+                    <input type="file" id="file-input">
+                </div>
 
-            <button class="btn btn-primary" id="generate-btn">
-              <span class="btn-text">Generate Secure Code</span>
-              <span class="spinner" style="display: none;"></span>
-            </button>
+                <button class="btn btn-primary" id="generate-btn">
+                    <span class="btn-text">Generate Secure Code</span>
+                    <div class="spinner" style="display: none;"></div>
+                </button>
 
-            <div class="result-box" id="send-result" style="display: none;" aria-live="polite">
-              <div class="success-icon">✓</div>
-              <p class="result-label">Your unique 4-digit code:</p>
-              <div class="code-display" id="generated-code"></div>
-              <p class="result-hint">Share this code to retrieve your item. Links expire in 30 minutes for your security.</p>
-            </div>
-            <div class="error-message" id="send-error" style="display: none;" role="alert"></div>
-          </article>
+                <div id="send-result" class="result-box" style="display: none;">
+                    <div class="success-icon">✓</div>
+                    <p class="result-label">Your unique code:</p>
+                    <div class="code-display" id="generated-code"></div>
+                    <p class="result-hint">Code expires in 30 minutes.</p>
+                </div>
+                <div id="send-error" class="error-message" style="display: none;"></div>
+            </section>
 
-          <article class="tab-content" id="receive-tab" role="tabpanel">
-            <div class="form-section">
-              <label for="code-input">Enter 4-Digit Retrieval Code</label>
-              <input type="text" id="code-input" placeholder="0000" maxlength="4" pattern="\d{4}" inputmode="numeric" autocomplete="off" />
-            </div>
+            <section class="tab-content" id="receive-tab">
+                <div class="form-section">
+                    <label for="code-input">Enter Retrieval Code</label>
+                    <input type="text" id="code-input" placeholder="0000" maxlength="4">
+                </div>
 
-            <button class="btn btn-primary" id="get-btn">
-              <span class="btn-text">Retrieve Data</span>
-              <span class="spinner" style="display: none;"></span>
-            </button>
+                <button class="btn btn-primary" id="get-btn">
+                    <span class="btn-text">Retrieve Data</span>
+                    <div class="spinner" style="display: none;"></div>
+                </button>
 
-            <div class="result-box" id="receive-result" style="display: none;" aria-live="polite">
-              <div id="text-result" style="display: none;">
-                <p class="result-label">Received Text Content:</p>
-                <textarea id="received-text" readonly rows="8"></textarea>
-                <button class="btn btn-secondary" id="copy-btn">Copy to Clipboard</button>
-              </div>
-              <div id="file-result" style="display: none;">
-                <div class="success-icon">✓</div>
-                <p class="result-label">File ready for download!</p>
-                <p class="result-hint" id="file-info"></p>
-              </div>
-            </div>
-            <div class="error-message" id="receive-error" style="display: none;" role="alert"></div>
-          </article>
-        </section>
+                <div id="receive-result" class="result-box" style="display: none;">
+                    <div id="text-result" style="display: none;">
+                        <textarea id="received-text" readonly rows="5"></textarea>
+                        <button class="btn btn-secondary" id="copy-btn">Copy Text</button>
+                    </div>
+                    <div id="file-result" style="display: none;">
+                        <div class="success-icon">✓</div>
+                        <p id="file-info"></p>
+                        <a id="download-link" class="btn btn-secondary" href="#" download>Download File</a>
+                    </div>
+                </div>
+                <div id="receive-error" class="error-message" style="display: none;"></div>
+            </section>
+        </main>
 
         <section class="how-it-works" style="margin-top: 40px; padding: 25px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; text-align: center;">
-          <h2 style="color: var(--accent-red); margin-bottom: 15px; font-size: 1.4rem;">How It Works</h2>
-          <div style="display: flex; justify-content: space-around; flex-wrap: wrap; gap: 20px;">
-            <div style="flex: 1; min-width: 120px;">
-              <p style="font-weight: bold; color: var(--text-primary);">1. Upload</p>
-              <p style="font-size: 0.85rem; color: var(--text-secondary);">Add text or a file (up to 15MB).</p>
+            <h2 style="color: var(--accent-red); margin-bottom: 15px; font-size: 1.4rem;">How It Works</h2>
+            <div style="display: flex; justify-content: space-around; flex-wrap: wrap; gap: 20px;">
+                <div style="flex: 1; min-width: 120px;">
+                    <p style="font-weight: bold; color: var(--text-primary);">1. Upload</p>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary);">Add text or a file (up to 15MB).</p>
+                </div>
+                <div style="flex: 1; min-width: 120px;">
+                    <p style="font-weight: bold; color: var(--text-primary);">2. Code</p>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary);">Get a unique 4-digit security code.</p>
+                </div>
+                <div style="flex: 1; min-width: 120px;">
+                    <p style="font-weight: bold; color: var(--text-primary);">3. Shared</p>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary);">Recipient enters code to download.</p>
+                </div>
+                <div style="flex: 1; min-width: 120px;">
+                    <p style="font-weight: bold; color: var(--text-primary);">4. Deleted</p>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary);">Everything is wiped after 30 minutes.</p>
+                </div>
             </div>
-            <div style="flex: 1; min-width: 120px;">
-              <p style="font-weight: bold; color: var(--text-primary);">2. Code</p>
-              <p style="font-size: 0.85rem; color: var(--text-secondary);">Get a unique 4-digit security code.</p>
-            </div>
-            <div style="flex: 1; min-width: 120px;">
-              <p style="font-weight: bold; color: var(--text-primary);">3. Shared</p>
-              <p style="font-size: 0.85rem; color: var(--text-secondary);">Recipient enters code to download.</p>
-            </div>
-            <div style="flex: 1; min-width: 120px;">
-              <p style="font-weight: bold; color: var(--text-primary);">4. Deleted</p>
-              <p style="font-size: 0.85rem; color: var(--text-secondary);">Everything is wiped after 30 minutes.</p>
-            </div>
-          </div>
         </section>
 
         <footer class="footer">
-          <p>Privacy First: Items expire automatically after 30 minutes. No accounts, no tracking.</p>
-          <div class="footer-links" style="margin-top: 10px; font-size: 13px;">
-            <a href="/privacy.html" style="color: #666; text-decoration: none;">Privacy Policy</a> | 
-            <a href="/terms.html" style="color: #666; text-decoration: none;">Terms of Service</a>
-          </div>
-          <p style="margin-top: 10px; font-weight: 500;">&copy; 2026 VegaShare. All rights reserved.</p>
+            <p>Privacy First: Data is automatically deleted after 30 minutes.</p>
+            <p>&copy; 2026 VegaShare</p>
         </footer>
-      </main>
     </div>
+
+    <div id="container-2c7c768beed5031f91655a9320b45a7d" style="text-align: center; margin-top: 20px;"></div>
+    <script async="async" data-cfasync="false" src="https://pl28416010.effectivegatecpm.com/2c7c768beed5031f91655a9320b45a7d/invoke.js"></script>
+
     <script type="module" src="/script.js"></script>
-  </body>
+
+    <script src="https://pl28415851.effectivegatecpm.com/90/ee/b3/90eeb392b144ebb17b3f54059cf424a5.js"></script>
+    <script src="https://abackmentor.com/07/db/b2/07dbb23d33bda2d47f4cd70aa10eee75.js"></script>
+</body>
 </html>
