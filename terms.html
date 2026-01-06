@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Terms of Service | VegaShare</title>
+    <meta name="robots" content="noindex, follow">
     <style>
         :root {
             --accent-red: #dc2626;
@@ -13,57 +14,79 @@
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            line-height: 1.6;
+            line-height: 1.7;
             color: var(--text-primary);
             background-color: var(--bg-primary);
             margin: 0;
             padding: 40px 20px;
         }
         .container {
-            max-width: 800px;
+            max-width: 850px;
             margin: auto;
             background: #fff;
-            padding: 40px;
+            padding: 50px;
             border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
         }
-        h1 { color: var(--accent-red); border-bottom: 2px solid var(--accent-red); padding-bottom: 10px; }
-        h2 { color: var(--text-primary); margin-top: 30px; font-size: 1.25rem; }
-        p { color: var(--text-secondary); margin-bottom: 15px; }
+        h1 { color: var(--accent-red); font-size: 2rem; border-bottom: 2px solid var(--accent-red); padding-bottom: 15px; margin-bottom: 30px; }
+        h2 { color: var(--text-primary); margin-top: 35px; font-size: 1.3rem; border-left: 4px solid var(--accent-red); padding-left: 15px; }
+        p, li { color: var(--text-secondary); margin-bottom: 15px; font-size: 0.95rem; }
+        ul { padding-left: 20px; }
+        .last-updated { font-style: italic; color: #6b7280; margin-bottom: 30px; }
         .btn-secondary {
             display: inline-block;
             text-decoration: none;
-            background: #fff;
-            color: var(--text-primary);
-            border: 1px solid #e5e7eb;
-            padding: 10px 20px;
+            background: var(--text-primary);
+            color: #fff;
+            padding: 12px 24px;
             border-radius: 8px;
             font-weight: 600;
-            margin-top: 20px;
-            transition: all 0.2s;
+            margin-top: 30px;
+            transition: opacity 0.2s;
         }
-        .btn-secondary:hover {
-            background: #fff1f2;
-            color: var(--accent-red);
-            border-color: var(--accent-red);
-        }
+        .btn-secondary:hover { opacity: 0.9; }
+        .disclaimer { font-size: 0.85rem; background: #fef2f2; padding: 15px; border-radius: 8px; border: 1px solid #fee2e2; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Terms of Service</h1>
-        <p><strong>Last Updated: January 2026</strong></p>
+        <p class="last-updated">Last Updated: January 06, 2026</p>
         
-        <h2>1. Acceptable Use</h2>
-        <p>By using VegaShare, you agree not to upload illegal, malicious, or copyrighted content that you do not have permission to share.</p>
-        
-        <h2>2. No Warranty</h2>
-        <p>VegaShare is provided "as is" without any warranties. We are not responsible for any data loss resulting from the expiration of the 30-minute timer.</p>
-        
-        <h2>3. Termination</h2>
-        <p>We reserve the right to remove any content or block access to the service for users who violate these terms.</p>
+        <p>By accessing or using <strong>VegaShare</strong> (vegashare.onrender.com), you agree to be bound by these Terms of Service. If you do not agree with any part of these terms, you are prohibited from using the service.</p>
 
-        <a href="/" class="btn-secondary">Back to Home</a>
+        <h2>1. Nature of Service</h2>
+        <p>VegaShare provides a temporary, anonymous peer-to-peer style sharing platform. You understand that:</p>
+        <ul>
+            <li>Content is hosted for a <strong>maximum of 30 minutes</strong>.</li>
+            <li>We do not provide permanent storage or backups.</li>
+            <li>Data is wiped automatically and cannot be retrieved once the timer expires.</li>
+        </ul>
+
+        <h2>2. Acceptable Use Policy</h2>
+        <p>You are solely responsible for the content you upload. You agree NOT to use VegaShare to distribute:</p>
+        <ul>
+            <li>Illegal content or materials that violate local, state, national, or international laws.</li>
+            <li>Malware, viruses, or any malicious code designed to disrupt software/hardware.</li>
+            <li>Copyrighted material without the explicit permission of the owner (DMCA compliance).</li>
+            <li>Content that promotes hate speech, violence, or harassment.</li>
+        </ul>
+
+        <h2>3. Intellectual Property</h2>
+        <p>We claim no ownership over the items you share. However, by uploading, you grant us the technical right to process and transmit that data to the recipient using your generated 4-digit code.</p>
+
+        <h2>4. Limitation of Liability & No Warranty</h2>
+        <div class="disclaimer">
+            <p><strong>"AS IS" BASIS:</strong> VegaShare is provided without any warranties of any kind. We do not guarantee that the service will be uninterrupted or error-free. In no event shall VegaShare Team Titans be liable for any damages (including loss of data or profit) arising out of the use or inability to use the service.</p>
+        </div>
+
+        <h2>5. Advertisements & Third Parties</h2>
+        <p>Our service displays third-party advertisements. We are not responsible for the content, products, or services offered in these ads. Interactions with third-party advertisers are solely between you and the advertiser.</p>
+
+        <h2>6. Changes to Terms</h2>
+        <p>We reserve the right to modify these terms at any time. Continued use of the platform after changes constitutes acceptance of the new terms.</p>
+
+        <a href="/" class="btn-secondary">Accept & Return Home</a>
     </div>
 </body>
 </html>
