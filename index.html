@@ -12,12 +12,19 @@
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
     <link rel="canonical" href="https://vegashare.onrender.com/">
 
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#dc2626">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="VegaShare">
+
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://vegashare.onrender.com/">
     <meta property="og:title" content="VegaShare | Secure Anonymous File & Text Sharing">
     <meta property="og:description" content="Transfer files and text instantly using a 4-digit code. No registration, total anonymity.">
     <meta property="og:image" content="https://vegashare.onrender.com/og-image.png"> 
     <meta property="og:site_name" content="VegaShare">
+
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="VegaShare | Anonymous File Sharing">
     <meta name="twitter:description" content="Securely share files and text with a temporary 4-digit code. Privacy first sharing.">
@@ -37,11 +44,8 @@
     }
     </script>
 
-    <meta name="theme-color" content="#dc2626">
-    <meta name="mobile-web-app-capable" content="yes">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
     <link rel="stylesheet" href="style.css">
-
 </head>
 <body>
 
@@ -49,8 +53,6 @@
         <header class="header">
             <h1>VegaShare</h1>
             <p class="subtitle">Securely share items with a temporary 4-digit code</p>
-
-            
         </header>
 
         <main class="card">
@@ -62,38 +64,40 @@
             <section class="tab-content active" id="send-tab">
                 <div class="form-section">
                     <label for="text-input">Share Text</label>
-                    <textarea id="text-input" placeholder="Enter text here..." rows="5"></textarea>
+                    <textarea id="text-input" placeholder="Paste your text, links, or notes here..." rows="5"></textarea>
                 </div>
+                
                 <div class="divider"><span>OR</span></div>
+                
                 <div class="form-section">
                     <label>Share File</label>
                     <label for="file-input" class="file-input-label">
-                        <span id="file-label">Click to choose a file</span>
+                        <span id="file-label">Click to choose a file (Max 15MB)</span>
                     </label>
-                    <input type="file" id="file-input">
+                    <input type="file" id="file-input" hidden>
                 </div>
+
                 <button class="btn btn-primary" id="generate-btn">
                     <span class="btn-text">Generate Secure Code</span>
                     <div class="spinner" style="display: none;"></div>
                 </button>
-                <div id="send-result" class="result-box" style="display: none;">
-                    <div class="success-icon">✓</div>
-                    <p class="result-label">Your unique code:</p>
-                    <div class="code-display" id="generated-code"></div>
-                    <p class="result-hint">Code expires in 30 minutes.</p>
-                </div>
+
+                <div id="active-shares-container" style="margin-top: 20px;"></div>
+                
                 <div id="send-error" class="error-message" style="display: none;"></div>
             </section>
 
             <section class="tab-content" id="receive-tab">
                 <div class="form-section">
                     <label for="code-input">Enter Retrieval Code</label>
-                    <input type="text" id="code-input" placeholder="0000" maxlength="4">
+                    <input type="text" id="code-input" placeholder="0000" maxlength="4" autocomplete="off">
                 </div>
+
                 <button class="btn btn-primary" id="get-btn">
                     <span class="btn-text">Retrieve Data</span>
                     <div class="spinner" style="display: none;"></div>
                 </button>
+
                 <div id="receive-result" class="result-box" style="display: none;">
                     <div id="text-result" style="display: none;">
                         <textarea id="received-text" readonly rows="5"></textarea>
@@ -101,7 +105,7 @@
                     </div>
                     <div id="file-result" style="display: none;">
                         <div class="success-icon">✓</div>
-                        <p id="file-info"></p>
+                        <p id="file-info" style="margin-bottom: 15px; font-weight: 500;"></p>
                         <a id="download-link" class="btn btn-secondary" href="#" download>Download File</a>
                     </div>
                 </div>
@@ -109,33 +113,36 @@
             </section>
         </main>
 
-        <section class="how-it-works" style="margin-top: 40px; padding: 25px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; text-align: center;">
-            <h2 style="color: var(--accent-red); margin-bottom: 15px; font-size: 1.4rem;">How It Works</h2>
+        <section class="how-it-works" style="margin-top: 40px; padding: 25px; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.03);">
+            <h2 style="color: #dc2626; margin-bottom: 20px; font-size: 1.4rem;">How It Works</h2>
             <div style="display: flex; justify-content: space-around; flex-wrap: wrap; gap: 20px;">
-                <div style="flex: 1; min-width: 120px;"><p><strong>1. Upload</strong><br>Add text or a file.</p></div>
-                <div style="flex: 1; min-width: 120px;"><p><strong>2. Code</strong><br>Get 4-digit security code.</p></div>
-                <div style="flex: 1; min-width: 120px;"><p><strong>3. Shared</strong><br>Recipient enters code.</p></div>
-                <div style="flex: 1; min-width: 120px;"><p><strong>4. Deleted</strong><br>Auto-wipe in 30 minutes.</p></div>
+                <div style="flex: 1; min-width: 120px;"><p><strong>1. Upload</strong><br><small>Add text or a file.</small></p></div>
+                <div style="flex: 1; min-width: 120px;"><p><strong>2. Code</strong><br><small>Get a 4-digit code.</small></p></div>
+                <div style="flex: 1; min-width: 120px;"><p><strong>3. Shared</strong><br><small>Enter code to get data.</small></p></div>
+                <div style="flex: 1; min-width: 120px;"><p><strong>4. Deleted</strong><br><small>Auto-wipe in 30m.</small></p></div>
             </div>
         </section>
 
-       
+        <footer class="footer" style="text-align: center; margin-top: 40px; padding-bottom: 20px;">
+            <p style="color: #6b7280; font-size: 0.9rem;">Privacy First: All data is permanently deleted every 30 minutes.</p>
+            
+            <div class="footer-links" style="margin-top: 15px; font-size: 14px;">
+                <a href="privacy.html" style="color: #4b5563; text-decoration: none; margin: 0 10px;">Privacy Policy</a>
+                <span style="color: #e5e7eb;">|</span>
+                <a href="terms.html" style="color: #4b5563; text-decoration: none; margin: 0 10px;">Terms of Service</a>
+            </div>
 
-        <footer class="footer">
-    <p>Privacy First: Data is automatically deleted after 30 minutes.</p>
-    
-    <div class="footer-links" style="margin-top: 10px; font-size: 14px;">
-        <a href="privacy.html" style="color: var(--text-secondary); text-decoration: none; margin: 0 10px;">Privacy Policy</a>
-       
-        <span style="color: var(--border);">|</span>
-        <a href="terms.html" style="color: var(--text-secondary); text-decoration: none; margin: 0 10px;">Terms of Service</a>
+            <p style="margin-top: 20px; font-weight: 600; color: #1f2937;">&copy; 2026 VegaShare Team Titans</p>
+        </footer>
     </div>
 
-    <p style="margin-top: 15px; font-weight: 600;">&copy; 2026 VegaShare Team Titans</p>
-</footer>
-    </div>
-
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW failed:', err));
+            });
+        }
+    </script>
     <script type="module" src="/script.js"></script>
-    
 </body>
 </html>

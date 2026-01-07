@@ -11,7 +11,6 @@ const PORT = process.env.PORT || 3000;
 // --- 1. Middleware ---
 app.use(cors());
 app.use(express.json());
-// Serves static files from the root directory
 app.use(express.static(path.join(__dirname)));
 
 // --- 2. MongoDB Connection ---
@@ -27,6 +26,7 @@ const itemSchema = new mongoose.Schema({
   fileData: { type: Buffer },          
   fileName: { type: String },
   mimeType: { type: String },
+  downloadCount: { type: Number, default: 0 }, 
   createdAt: { type: Date, default: Date.now, index: { expires: '30m' } } 
 });
 
@@ -35,7 +35,7 @@ const Item = mongoose.model('Item', itemSchema);
 // --- 4. Multer Configuration ---
 const upload = multer({ 
   storage: multer.memoryStorage(),
-  limits: { fileSize: 15 * 1024 * 1024 } 
+  limits: { fileSize: 15 * 1024 * 1024 } // 15MB Limit
 });
 
 // Helper: Generate a unique 4-digit code
@@ -52,10 +52,8 @@ async function generateUniqueCode() {
 
 // --- 5. API Routes ---
 
-// Keep-alive endpoint for UptimeRobot
-app.get('/ping', (req, res) => {
-  res.status(200).send('pong');
-});
+// Keep-alive endpoint
+app.get('/ping', (req, res) => res.status(200).send('pong'));
 
 // Upload Route
 app.post('/api/upload-item', upload.single('file'), async (req, res) => {
@@ -89,13 +87,34 @@ app.post('/api/upload-item', upload.single('file'), async (req, res) => {
   }
 });
 
-// Retrieval Route
+// STATS ROUTE: Used by the stacking notification cards for live updates
+app.get('/api/get-stats', async (req, res) => {
+  try {
+    const { code } = req.query;
+    // We only select the downloadCount to keep the response fast and small
+    const item = await Item.findOne({ code }, 'downloadCount'); 
+    
+    if (!item) return res.status(404).json({ success: false, error: 'Expired' });
+    
+    res.json({ success: true, downloadCount: item.downloadCount });
+  } catch (error) {
+    res.status(500).json({ success: false });
+  }
+});
+
+// RETRIEVAL ROUTE: Increments the count every time an item is fetched
 app.get('/api/get-item', async (req, res) => {
   try {
     const { code } = req.query;
     if (!code) return res.status(400).json({ success: false, error: 'Code required' });
 
-    const item = await Item.findOne({ code });
+    // Atomic increment: prevents data loss if multiple people download simultaneously
+    const item = await Item.findOneAndUpdate(
+      { code }, 
+      { $inc: { downloadCount: 1 } }, 
+      { new: true }
+    );
+
     if (!item) {
       return res.status(404).json({ success: false, error: 'Item expired or not found' });
     }
@@ -103,6 +122,7 @@ app.get('/api/get-item', async (req, res) => {
     if (item.type === 'text') {
       return res.json({ success: true, itemType: 'text', content: item.content });
     } else {
+      // Sending file as Base64 for easy handling in the browser
       const fileBase64 = `data:${item.mimeType};base64,${item.fileData.toString('base64')}`;
       return res.json({
         success: true,
@@ -117,23 +137,20 @@ app.get('/api/get-item', async (req, res) => {
   }
 });
 
-// --- 6. Route & Error Handling (Express 5 Compatibility) ---
+// --- 6. Static Pages & Error Handling ---
 
-// A. Serve specific legal pages first so they don't trigger 404
 app.get('/privacy', (req, res) => res.sendFile(path.join(__dirname, 'privacy.html')));
 app.get('/terms', (req, res) => res.sendFile(path.join(__dirname, 'terms.html')));
 
-// B. Custom 404 Handler 
-// We place this BEFORE the index.html fallback for specific invalid file requests
+// Custom 404 Logic
 app.use((req, res, next) => {
-    // If the request is for a file that doesn't exist (like a broken image or .php scan)
     if (req.accepts('html') && !req.url.startsWith('/api')) {
         return res.status(404).sendFile(path.join(__dirname, '404.html'));
     }
     next();
 });
 
-// C. Final Fallback (Main Application)
+// Single Page Application Fallback
 app.use((req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });

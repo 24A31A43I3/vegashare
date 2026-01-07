@@ -391,3 +391,101 @@ input[type="file"] {
   .code-display { font-size: 2.5rem; }
   #code-input { font-size: 1.5rem; }
 }
+/* --- High-End Stacking Notification Styles --- */
+.share-notification {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    position: relative;
+    overflow: hidden;
+    animation: slideDown 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.share-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.share-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.close-notify {
+    background: #f3f4f6;
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #9ca3af;
+    transition: all 0.2s;
+}
+
+.close-notify:hover {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.mini-code {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #dc2626;
+    text-align: center;
+    letter-spacing: 8px;
+    background: #f9fafb;
+    border: 1px solid #f3f4f6;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 10px 0;
+    animation: pulseSubtle 3s infinite;
+}
+
+.live-stats {
+    margin-top: 15px;
+    text-align: center;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #059669; /* Vibrant Green */
+}
+
+.result-hint {
+    text-align: center;
+    color: #9ca3af;
+    font-size: 0.8rem;
+    margin-top: 8px;
+}
+
+/* 30-Minute Visual Progress Bar */
+.share-notification::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 4px;
+    background: #dc2626;
+    width: 100%;
+    animation: expireLine 1800s linear forwards;
+}
+
+@keyframes expireLine {
+    from { width: 100%; }
+    to { width: 0%; opacity: 0.3; }
+}
+
+@keyframes pulseSubtle {
+    0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.05); }
+    50% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+}
