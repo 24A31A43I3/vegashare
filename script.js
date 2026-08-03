@@ -1,219 +1,364 @@
-/**
- * VegaShare Final script.js
- * Features: Stacking notifications, Live individual download tracking,
- * Persistent UI across tab switches, and Mobile-friendly UX.
- */
+/* ============================================================
+   VegaShare — script.js  (Vanilla JS, no dependencies)
+   Sections: utils · theme · nav · reveal · ripple · features
+             faq · upload flow · settings · download flow
+   Backend integration points are marked with API HOOK.
+   ============================================================ */
+(function () {
+  "use strict";
 
-const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? 'http://localhost:3000/api'
-  : '/api';
+  /* ---------- Utils ---------- */
+  const $ = (sel, root) => (root || document).querySelector(sel);
+  const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
+  const MAX_SIZE = 200 * 1024 * 1024; // 200MB
 
-const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB
+  function formatBytes(bytes) {
+    if (!bytes) return "0 B";
+    const units = ["B", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+    return (bytes / Math.pow(1024, i)).toFixed(i ? 1 : 0) + " " + units[i];
+  }
+  function formatTime(sec) {
+    if (!isFinite(sec) || sec < 0) return "—";
+    if (sec < 60) return Math.ceil(sec) + "s";
+    const m = Math.floor(sec / 60);
+    return m + "m " + Math.round(sec % 60) + "s";
+  }
+  const EXPIRY_LABEL = {
+    "15": "15 Minutes", "30": "30 Minutes", "60": "1 Hour",
+    "360": "6 Hours", "720": "12 Hours", "1440": "24 Hours"
+  };
 
-// DOM Elements
-const tabButtons = document.querySelectorAll('.tab-button');
-const tabContents = document.querySelectorAll('.tab-content');
-const fileInput = document.getElementById('file-input');
-const fileLabel = document.getElementById('file-label');
-const textInput = document.getElementById('text-input');
-const generateBtn = document.getElementById('generate-btn');
-const sharesContainer = document.getElementById('active-shares-container');
-const sendError = document.getElementById('send-error');
-const codeInput = document.getElementById('code-input');
-const getBtn = document.getElementById('get-btn');
-const receiveResult = document.getElementById('receive-result');
-const receiveError = document.getElementById('receive-error');
-const textResult = document.getElementById('text-result');
-const fileResult = document.getElementById('file-result');
-const receivedText = document.getElementById('received-text');
-const copyBtn = document.getElementById('copy-btn');
-const fileInfo = document.getElementById('file-info');
-const downloadLink = document.getElementById('download-link');
+  let toastTimer;
+  function toast(msg) {
+    const el = $("#toast");
+    el.textContent = msg;
+    el.classList.add("is-show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove("is-show"), 2400);
+  }
 
-// --- 1. Tab Switching Logic ---
-tabButtons.forEach(button => {
-  button.addEventListener('click', () => {
-    const targetTab = button.dataset.tab;
-    
-    tabButtons.forEach(btn => btn.classList.remove('active'));
-    tabContents.forEach(content => content.classList.remove('active'));
-    
-    button.classList.add('active');
-    document.getElementById(`${targetTab}-tab`).classList.add('active');
-    
-    // Clear only retrieval messages, persistent uploads stay visible
-    receiveResult.style.display = 'none';
-    receiveError.style.display = 'none';
+  /* ---------- Theme ---------- */
+  const themeBtn = $("#themeToggle");
+  const stored = localStorage.getItem("vega-theme");
+  const initial = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  setTheme(initial);
+  function setTheme(mode) {
+    document.documentElement.setAttribute("data-theme", mode);
+    themeBtn.setAttribute("aria-pressed", String(mode === "dark"));
+    localStorage.setItem("vega-theme", mode);
+  }
+  themeBtn.addEventListener("click", () => {
+    setTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark");
   });
-});
 
-// --- 2. File Input Handling ---
-fileInput.addEventListener('change', (e) => {
-  const file = e.target.files[0];
-  if (file) {
-    if (file.size > MAX_FILE_SIZE) {
-      showError('send', `File too large (Max 15MB).`);
-      fileInput.value = '';
-      fileLabel.textContent = 'Click to choose a file';
-    } else {
-      fileLabel.textContent = `Selected: ${file.name}`;
-      textInput.value = ''; 
-      sendError.style.display = 'none';
-    }
+  /* ---------- Navigation ---------- */
+  const nav = $("#nav");
+  const burger = $("#burger");
+  const menu = $("#mobileMenu");
+
+  window.addEventListener("scroll", () => {
+    nav.classList.toggle("is-stuck", window.scrollY > 8);
+  }, { passive: true });
+
+  burger.addEventListener("click", () => {
+    const open = burger.getAttribute("aria-expanded") === "true";
+    burger.setAttribute("aria-expanded", String(!open));
+    burger.setAttribute("aria-label", open ? "Open menu" : "Close menu");
+    menu.hidden = open;
+  });
+  $$("a", menu).forEach((a) => a.addEventListener("click", () => {
+    burger.setAttribute("aria-expanded", "false");
+    menu.hidden = true;
+  }));
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !menu.hidden) burger.click();
+  });
+
+  /* Bottom nav active state */
+  const bottomLinks = $$(".bottom-nav a[href^='#']");
+  const sections = ["home", "download", "upload", "faq", "about"].map((id) => document.getElementById(id));
+  window.addEventListener("scroll", () => {
+    const y = window.scrollY + window.innerHeight / 3;
+    let active = sections[0];
+    sections.forEach((s) => { if (s && s.offsetTop <= y) active = s; });
+    bottomLinks.forEach((l) => l.classList.toggle("is-active", active && l.getAttribute("href") === "#" + active.id));
+  }, { passive: true });
+
+  /* ---------- Scroll reveal ---------- */
+  const io = "IntersectionObserver" in window
+    ? new IntersectionObserver((entries) => {
+        entries.forEach((en) => { if (en.isIntersecting) { en.target.classList.add("is-in"); io.unobserve(en.target); } });
+      }, { threshold: 0.14 })
+    : null;
+  function observe(el) { if (io) io.observe(el); else el.classList.add("is-in"); }
+  $$(".reveal").forEach(observe);
+
+  /* ---------- Ripple effect ---------- */
+  document.addEventListener("pointerdown", (e) => {
+    const btn = e.target.closest(".ripple");
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    const wave = document.createElement("span");
+    wave.className = "ripple-wave";
+    wave.style.width = wave.style.height = size + "px";
+    wave.style.left = e.clientX - rect.left - size / 2 + "px";
+    wave.style.top = e.clientY - rect.top - size / 2 + "px";
+    btn.appendChild(wave);
+    setTimeout(() => wave.remove(), 640);
+  });
+
+  /* ---------- Features (rendered from data) ---------- */
+  const ICONS = {
+    bolt: '<path d="M13 2 4 14h6l-1 8 9-12h-6z"/>',
+    mask: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/>',
+    lock: '<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',
+    gauge: '<path d="M12 4v0a8 8 0 1 0 8 8"/><path d="m12 12 5-4"/>',
+    trash: '<path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/>',
+    cloud: '<path d="M6 18h11a4 4 0 0 0 .3-8A6 6 0 0 0 6 11a3.5 3.5 0 0 0 0 7Z"/>',
+    devices: '<rect x="3" y="4" width="13" height="11" rx="2"/><rect x="16" y="9" width="5" height="11" rx="1.5"/>'
+  };
+  const FEATURES = [
+    ["bolt", "Fast Upload", "Chunked transfers that saturate your connection with live speed and ETA."],
+    ["mask", "Anonymous", "No accounts, no emails, no tracking. Just a code that works."],
+    ["clock", "Temporary Storage", "Pick an expiry from 15 minutes to 24 hours."],
+    ["lock", "Encrypted Sharing", "TLS in transit plus optional password protection."],
+    ["gauge", "Download Limits", "Cap downloads from 5 to 50, or make it one-time only."],
+    ["trash", "Auto Delete", "Files are purged permanently the moment they expire."],
+    ["cloud", "Cloud Ready", "Drops into any Express + MongoDB stack without changes."],
+    ["devices", "Cross Platform", "Designed mobile-first and flawless on every screen."]
+  ];
+  $("#features").innerHTML = FEATURES.map(([ico, title, text]) => `
+    <article class="feature reveal">
+      <span class="feature__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONS[ico]}</svg></span>
+      <h3>${title}</h3><p>${text}</p>
+    </article>`).join("");
+  $$("#features .reveal").forEach(observe);
+
+  /* ---------- FAQ accordion ---------- */
+  const FAQS = [
+    ["Do I need an account to use VegaShare?", "Never. Uploading and downloading are completely anonymous — the 4-digit code is the only thing you need to keep."],
+    ["What is the maximum file size?", "A single file can be up to 200 MB. For larger transfers, compress the folder or split it into parts."],
+    ["What happens when a file expires?", "The file and its metadata are permanently deleted. Expired codes simply stop resolving."],
+    ["Can I limit who downloads my file?", "Yes. Set a download cap, add a password, or enable one-time download so the file self-destructs after the first grab."],
+    ["Are my files encrypted?", "All transfers use TLS, and password-protected files require the passphrase before the download is released."],
+    ["Can I delete a file early?", "Yes — use the one-time download toggle, or simply let the shortest expiry window handle it for you."]
+  ];
+  $("#faqList").innerHTML = FAQS.map(([q, a], i) => `
+    <div class="faq__item reveal">
+      <button class="faq__q" type="button" aria-expanded="false" aria-controls="faq-a-${i}">
+        <span>${q}</span><span class="chev" aria-hidden="true"></span>
+      </button>
+      <div class="faq__a" id="faq-a-${i}" role="region"><p>${a}</p></div>
+    </div>`).join("");
+  $$("#faqList .reveal").forEach(observe);
+
+  $$(".faq__q").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const item = btn.parentElement;
+      const panel = item.querySelector(".faq__a");
+      const open = item.classList.toggle("is-open");
+      btn.setAttribute("aria-expanded", String(open));
+      panel.style.maxHeight = open ? panel.scrollHeight + "px" : "0px";
+    });
+  });
+
+  /* ---------- Sharing settings ---------- */
+  const settingsToggle = $("#settingsToggle");
+  const settingsBody = $("#settingsBody");
+  settingsToggle.addEventListener("click", () => {
+    const open = settingsToggle.getAttribute("aria-expanded") === "true";
+    settingsToggle.setAttribute("aria-expanded", String(!open));
+    settingsBody.hidden = open;
+  });
+
+  $$(".switch").forEach((sw) => {
+    sw.addEventListener("click", () => {
+      const on = sw.classList.toggle("is-on");
+      sw.setAttribute("aria-checked", String(on));
+      if (sw.id === "qrToggle") $("#qrWrap").hidden = !on;
+    });
+  });
+
+  /* ---------- Upload flow ---------- */
+  const dropzone = $("#dropzone");
+  const fileInput = $("#fileInput");
+  const filePreview = $("#filePreview");
+  const uploadHint = $("#uploadHint");
+  const panes = { drop: $("#paneDrop"), progress: $("#paneProgress"), success: $("#paneSuccess") };
+  let currentFile = null;
+  let timer = null;
+
+  function showPane(name) {
+    Object.keys(panes).forEach((k) => { panes[k].hidden = k !== name; });
   }
-});
-
-// --- 3. Send / Upload Logic (Stacking Feature) ---
-generateBtn.addEventListener('click', async () => {
-  const text = textInput.value.trim();
-  const file = fileInput.files[0];
-  
-  if (!text && !file) return showError('send', 'Please provide text or a file to share.');
-  
-  setLoading('generate', true);
-
-  try {
-    let response;
-    if (file) {
-      const formData = new FormData();
-      formData.append('file', file);
-      response = await fetch(`${API_URL}/upload-item`, { method: 'POST', body: formData });
-    } else {
-      response = await fetch(`${API_URL}/upload-item`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text }),
-      });
-    }
-
-    const data = await response.json();
-    if (!data.success) throw new Error(data.error || 'Upload failed');
-    
-    // Create a new persistent card for this specific share
-    createShareCard(data.code, file ? file.name : "Text Snippet");
-
-    // Clear inputs for the next share
-    textInput.value = '';
-    fileInput.value = '';
-    fileLabel.textContent = 'Click to choose a file (Max 15MB)';
-
-  } catch (error) {
-    showError('send', error.message);
-  } finally {
-    setLoading('generate', false);
+  function setHint(msg, isError) {
+    uploadHint.textContent = msg || "";
+    uploadHint.classList.toggle("is-error", !!isError);
   }
-});
 
-// --- 4. Dynamic Share Card & Live Tracking ---
-function createShareCard(code, label) {
-    const card = document.createElement('div');
-    card.className = 'share-notification animate-in';
-    card.innerHTML = `
-        <div class="share-header">
-            <span class="share-title">📦 ${label}</span>
-            <button class="close-notify" title="Dismiss">✕</button>
-        </div>
-        <p class="result-label" style="text-align:center; margin-bottom:5px;">Retrieval Code:</p>
-        <div class="mini-code">${code}</div>
-        <div class="live-stats">
-            Downloads: <span class="d-count">0</span>
-        </div>
-        <p class="result-hint">Expires in 30 minutes</p>
-    `;
+  function selectFile(file) {
+    if (!file) return;
+    if (file.size > MAX_SIZE) {
+      setHint("That file is " + formatBytes(file.size) + " — the limit is 200 MB.", true);
+      return;
+    }
+    currentFile = file;
+    setHint("");
+    $("#fileName").textContent = file.name;
+    $("#fileSize").textContent = formatBytes(file.size) + (file.type ? " · " + file.type : "");
+    filePreview.hidden = false;
+  }
 
-    sharesContainer.prepend(card); 
+  $("#browseBtn").addEventListener("click", (e) => { e.stopPropagation(); fileInput.click(); });
+  dropzone.addEventListener("click", (e) => { if (!e.target.closest(".btn")) fileInput.click(); });
+  dropzone.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileInput.click(); }
+  });
+  fileInput.addEventListener("change", () => selectFile(fileInput.files[0]));
 
-    // Handle Dismiss button with Animation
-    card.querySelector('.close-notify').onclick = () => {
-        card.classList.add('removing');
-        setTimeout(() => card.remove(), 300);
-    };
+  ["dragenter", "dragover"].forEach((ev) =>
+    dropzone.addEventListener(ev, (e) => { e.preventDefault(); dropzone.classList.add("is-over"); }));
+  ["dragleave", "drop"].forEach((ev) =>
+    dropzone.addEventListener(ev, (e) => { e.preventDefault(); dropzone.classList.remove("is-over"); }));
+  dropzone.addEventListener("drop", (e) => {
+    if (e.dataTransfer && e.dataTransfer.files.length) selectFile(e.dataTransfer.files[0]);
+  });
 
-    // Independent Live Polling for this specific card
-    const interval = setInterval(async () => {
-        try {
-            const res = await fetch(`${API_URL}/get-stats?code=${code}`);
-            const stats = await res.json();
-            if (stats.success) {
-                card.querySelector('.d-count').textContent = stats.downloadCount;
-            } else {
-                card.style.opacity = '0.6';
-                card.querySelector('.live-stats').textContent = "Expired/Deleted";
-                card.querySelector('.live-stats').style.color = "#9ca3af";
-                clearInterval(interval);
-            }
-        } catch (e) {
-            clearInterval(interval);
+  /* Paste from clipboard (files or text snippet) */
+  $("#pasteBtn").addEventListener("click", async (e) => {
+    e.stopPropagation();
+    try {
+      if (navigator.clipboard && navigator.clipboard.read) {
+        const items = await navigator.clipboard.read();
+        for (const item of items) {
+          const type = item.types.find((t) => t !== "text/plain");
+          if (type) {
+            const blob = await item.getType(type);
+            return selectFile(new File([blob], "clipboard." + type.split("/")[1], { type }));
+          }
         }
-    }, 5000);
-
-    // Auto-remove card after 30 minutes
-    setTimeout(() => {
-        clearInterval(interval);
-        if(card.parentElement) {
-            card.classList.add('removing');
-            setTimeout(() => card.remove(), 300);
-        }
-    }, 30 * 60 * 1000);
-}
-
-// --- 5. Receive / Retrieval Logic ---
-getBtn.addEventListener('click', async () => {
-  const code = codeInput.value.trim();
-  if (!code || code.length !== 4) return showError('receive', 'Please enter a valid 4-digit code.');
-  
-  setLoading('get', true);
-  try {
-    const response = await fetch(`${API_URL}/get-item?code=${code}`);
-    const data = await response.json();
-    
-    if (!data.success) throw new Error(data.error || 'Item not found or expired');
-    
-    receiveResult.style.display = 'block';
-    
-    if (data.itemType === 'text') {
-      textResult.style.display = 'block';
-      fileResult.style.display = 'none';
-      receivedText.value = data.content;
-    } else {
-      fileResult.style.display = 'block';
-      textResult.style.display = 'none';
-      fileInfo.textContent = `File ready: ${data.fileName}`;
-      downloadLink.href = data.fileUrl;
-      downloadLink.setAttribute('download', data.fileName);
+      }
+      const text = await navigator.clipboard.readText();
+      if (text && text.trim()) {
+        return selectFile(new File([text], "clipboard.txt", { type: "text/plain" }));
+      }
+      setHint("Clipboard is empty.", true);
+    } catch (err) {
+      setHint("Clipboard access was blocked — use Browse Files instead.", true);
     }
-  } catch (error) {
-    showError('receive', error.message);
-  } finally {
-    setLoading('get', false);
+  });
+  window.addEventListener("paste", (e) => {
+    const f = e.clipboardData && e.clipboardData.files[0];
+    if (f) selectFile(f);
+  });
+
+  /* Simulated progress — replace with a real XHR/fetch upload. API HOOK */
+  $("#startUpload").addEventListener("click", () => {
+    if (!currentFile) return;
+    $("#progName").textContent = currentFile.name;
+    $("#progSize").textContent = formatBytes(currentFile.size);
+    showPane("progress");
+
+    let loaded = 0;
+    const bar = $("#progBar");
+    // FormData ready for POST /api/upload with settings below. API HOOK
+    timer = setInterval(() => {
+      const speed = (900 + Math.random() * 2600) * 1024; // bytes/sec
+      loaded = Math.min(currentFile.size, loaded + speed * 0.2);
+      const pct = Math.round((loaded / currentFile.size) * 100);
+      bar.style.width = pct + "%";
+      $("#progPct").textContent = pct + "%";
+      $("#progSpeed").textContent = formatBytes(speed) + "/s";
+      $("#progEta").textContent = formatTime((currentFile.size - loaded) / speed);
+      if (pct >= 100) { clearInterval(timer); timer = null; finishUpload(); }
+    }, 200);
+  });
+
+  $("#cancelUpload").addEventListener("click", () => {
+    if (timer) clearInterval(timer);
+    timer = null;
+    $("#progBar").style.width = "0%";
+    showPane("drop");
+    toast("Upload cancelled");
+  });
+
+  function finishUpload() {
+    const expiry = $("#expiry").value;
+    const max = $("#maxDownloads").value;
+    const once = $("#onceToggle").classList.contains("is-on");
+    const code = String(Math.floor(1000 + Math.random() * 9000));
+
+    $("#codeDigits").innerHTML = code.split("").map((d) => "<b>" + d + "</b>").join("");
+    $("#shareLink").value = window.location.origin + "/d/" + code;
+    $("#expiresIn").textContent = EXPIRY_LABEL[expiry] || expiry + " Minutes";
+    $("#remDl").textContent = once ? "1 / 1" : max + " / " + max;
+    $("#qrWrap").hidden = !$("#qrToggle").classList.contains("is-on");
+    showPane("success");
   }
-});
 
-// --- 6. Helper Functions ---
-copyBtn.addEventListener('click', () => {
-  navigator.clipboard.writeText(receivedText.value);
-  const originalText = copyBtn.textContent;
-  copyBtn.textContent = 'Copied! ✓';
-  copyBtn.style.background = "#059669"; 
-  setTimeout(() => { 
-    copyBtn.textContent = originalText;
-    copyBtn.style.background = ""; 
-  }, 2000);
-});
+  $("#newUpload").addEventListener("click", () => {
+    currentFile = null;
+    fileInput.value = "";
+    filePreview.hidden = true;
+    $("#progBar").style.width = "0%";
+    setHint("");
+    showPane("drop");
+  });
 
-function setLoading(type, isLoading) {
-  const btn = type === 'generate' ? generateBtn : getBtn;
-  const spinner = btn.querySelector('.spinner');
-  const btnText = btn.querySelector('.btn-text');
-  
-  btn.disabled = isLoading;
-  if(spinner) spinner.style.display = isLoading ? 'inline-block' : 'none';
-  if(btnText) btnText.style.display = isLoading ? 'none' : 'inline-block';
-}
+  /* Copy actions */
+  $$("[data-copy]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const value = btn.dataset.copy === "code"
+        ? $("#codeDigits").textContent.trim()
+        : $("#shareLink").value;
+      try {
+        await navigator.clipboard.writeText(value);
+        toast("Copied to clipboard");
+      } catch (err) {
+        toast("Copy failed — select and copy manually");
+      }
+    });
+  });
 
-function showError(tab, msg) {
-  const el = tab === 'send' ? sendError : receiveError;
-  el.textContent = msg;
-  el.style.display = 'block';
-  setTimeout(() => { el.style.display = 'none'; }, 5000);
-}
+  /* ---------- Download flow ---------- */
+  const codeInputs = $$(".code-input input");
+  codeInputs.forEach((input, i) => {
+    input.addEventListener("input", () => {
+      input.value = input.value.replace(/\D/g, "").slice(0, 1);
+      if (input.value && codeInputs[i + 1]) codeInputs[i + 1].focus();
+    });
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Backspace" && !input.value && codeInputs[i - 1]) codeInputs[i - 1].focus();
+      if (e.key === "ArrowLeft" && codeInputs[i - 1]) codeInputs[i - 1].focus();
+      if (e.key === "ArrowRight" && codeInputs[i + 1]) codeInputs[i + 1].focus();
+    });
+    input.addEventListener("paste", (e) => {
+      e.preventDefault();
+      const digits = (e.clipboardData.getData("text") || "").replace(/\D/g, "").slice(0, 4).split("");
+      digits.forEach((d, n) => { if (codeInputs[n]) codeInputs[n].value = d; });
+      (codeInputs[digits.length] || codeInputs[3]).focus();
+    });
+  });
+
+  $("#codeForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const code = codeInputs.map((i) => i.value).join("");
+    const hint = $("#dlHint");
+    if (code.length < 4) {
+      hint.textContent = "Enter all four digits of your code.";
+      hint.classList.add("is-error");
+      $("#previewCard").hidden = true;
+      return;
+    }
+    // GET /api/files/:code — replace with a real lookup. API HOOK
+    hint.textContent = "File found for code " + code + ".";
+    hint.classList.remove("is-error");
+    $("#previewCard").hidden = false;
+  });
+
+  /* ---------- Footer year ---------- */
+  $("#year").textContent = new Date().getFullYear();
+})();
