@@ -1,8 +1,5 @@
 /* ============================================================
-   VegaShare — script.js (Vanilla JS, zero dependencies)
-   Sections: utils · theme · nav · reveal · ripple · features
-             faq · upload flow · settings · download flow
-   Backend integration points are marked with API HOOK.
+   VegaShare — script.js
    ============================================================ */
 (function () {
   "use strict";
@@ -10,7 +7,7 @@
   /* ---------- Utils ---------- */
   const $ = (sel, root) => (root || document).querySelector(sel);
   const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
-  const MAX_SIZE = 200 * 1024 * 1024; // 200MB
+  const MAX_SIZE = 200 * 1024 * 1024; // 200MB limit for batch total
 
   function formatBytes(bytes) {
     if (!bytes) return "0 B";
@@ -45,14 +42,9 @@
     toastTimer = setTimeout(() => el.classList.remove("is-show"), 2400);
   }
 
-  /* ---------- Theme (System Default + User Override) ---------- */
+  /* ---------- Theme (Default Light + User Toggle) ---------- */
   const themeBtn = $("#themeToggle");
   const storedTheme = localStorage.getItem("vega-theme");
-  const systemQuery = window.matchMedia("(prefers-color-scheme: dark)");
-
-  function getSystemTheme() {
-    return systemQuery.matches ? "dark" : "light";
-  }
 
   function applyTheme(mode) {
     document.documentElement.setAttribute("data-theme", mode);
@@ -61,20 +53,9 @@
     }
   }
 
-  // 1. Initialize theme (user override or system preference)
-  const initialTheme = storedTheme || getSystemTheme();
+  const initialTheme = storedTheme || "light";
   applyTheme(initialTheme);
 
-  // 2. Dynamic listener for system theme changes (if no manual preference is saved)
-  if (systemQuery.addEventListener) {
-    systemQuery.addEventListener("change", (e) => {
-      if (!localStorage.getItem("vega-theme")) {
-        applyTheme(e.matches ? "dark" : "light");
-      }
-    });
-  }
-
-  // 3. User explicit toggle choice
   if (themeBtn) {
     themeBtn.addEventListener("click", () => {
       const current = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
@@ -106,10 +87,6 @@
       burger.setAttribute("aria-expanded", "false");
       menu.hidden = true;
     }));
-
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && !menu.hidden) burger.click();
-    });
   }
 
   /* Bottom nav active state tracking */
@@ -157,7 +134,7 @@
     setTimeout(() => wave.remove(), 640);
   });
 
-  /* ---------- Features (Rendered from data) ---------- */
+  /* ---------- Features ---------- */
   const ICONS = {
     bolt: '<path d="M13 2 4 14h6l-1 8 9-12h-6z"/>',
     mask: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
@@ -170,14 +147,14 @@
   };
 
   const FEATURES = [
-    ["bolt", "Fast Upload", "Chunked transfers that saturate your connection with live speed and ETA."],
-    ["mask", "Anonymous", "No accounts, no emails, no tracking. Just a code that works."],
+    ["bolt", "Fast Transfer", "Share multiple files or clipboard text notes in seconds."],
+    ["mask", "Anonymous", "No accounts, no emails, no tracking. Just a 4-digit retrieval code."],
     ["clock", "Temporary Storage", "Pick an expiry from 15 minutes to 24 hours."],
     ["lock", "Encrypted Sharing", "TLS in transit plus optional password protection."],
-    ["gauge", "Download Limits", "Cap downloads from 5 to 50, or make it one-time only."],
-    ["trash", "Auto Delete", "Files are purged permanently the moment they expire."],
-    ["cloud", "Cloud Ready", "Drops into any Express + MongoDB stack without changes."],
-    ["devices", "Cross Platform", "Designed mobile-first and flawless on every screen."]
+    ["gauge", "Access Limits", "Cap downloads/views from 5 to 50, or make it one-time only."],
+    ["trash", "Auto Delete", "Files and text are purged permanently the moment they expire."],
+    ["cloud", "Cloud Ready", "Seamlessly integrates into any Express + MongoDB stack."],
+    ["devices", "Cross Platform", "Mobile-first, optimized for desktop, tablet, and mobile."]
   ];
 
   const featuresContainer = $("#features");
@@ -192,12 +169,11 @@
 
   /* ---------- FAQ accordion ---------- */
   const FAQS = [
-    ["Do I need an account to use VegaShare?", "Never. Uploading and downloading are completely anonymous — the 4-digit code is the only thing you need to keep."],
-    ["What is the maximum file size?", "A single file can be up to 200 MB. For larger transfers, compress the folder or split it into parts."],
-    ["What happens when a file expires?", "The file and its metadata are permanently deleted. Expired codes simply stop resolving."],
-    ["Can I limit who downloads my file?", "Yes. Set a download cap, add a password, or enable one-time download so the file self-destructs after the first grab."],
-    ["Are my files encrypted?", "All transfers use TLS, and password-protected files require the passphrase before the download is released."],
-    ["Can I delete a file early?", "Yes — use the one-time download toggle, or simply let the shortest expiry window handle it for you."]
+    ["Do I need an account to use VegaShare?", "Never. Uploading files or sharing text is completely anonymous — the 4-digit code is the only thing needed."],
+    ["Can I share plain text or code snippets?", "Yes! Use the 'Share Text / Clipboard' tab to quickly send text, links, WiFi passwords, or code snippets."],
+    ["What is the maximum file size?", "You can upload multiple files up to 200 MB total per batch."],
+    ["What happens when content expires?", "Files, text notes, and metadata are permanently erased from the server."],
+    ["Are my items encrypted?", "All transfers use TLS encryption, and optional password protection ensures only keyholders can open items."]
   ];
 
   const faqContainer = $("#faqList");
@@ -222,7 +198,72 @@
     });
   }
 
-  /* ---------- Sharing settings ---------- */
+  /* ---------- Sharing Mode Tabs (Files vs Text) ---------- */
+  const tabFiles = $("#tabFiles");
+  const tabText = $("#tabText");
+  const paneDrop = $("#paneDrop");
+  const paneText = $("#paneText");
+  let activeMode = "files"; // "files" | "text"
+
+  if (tabFiles && tabText) {
+    tabFiles.addEventListener("click", () => {
+      activeMode = "files";
+      tabFiles.classList.add("is-active");
+      tabFiles.setAttribute("aria-selected", "true");
+      tabText.classList.remove("is-active");
+      tabText.setAttribute("aria-selected", "false");
+      paneDrop.hidden = false;
+      paneText.hidden = true;
+    });
+
+    tabText.addEventListener("click", () => {
+      activeMode = "text";
+      tabText.classList.add("is-active");
+      tabText.setAttribute("aria-selected", "true");
+      tabFiles.classList.remove("is-active");
+      tabFiles.setAttribute("aria-selected", "false");
+      paneText.hidden = false;
+      paneDrop.hidden = true;
+    });
+  }
+
+  /* ---------- Text / Clipboard Sharing Logic ---------- */
+  const textInput = $("#textInput");
+  const textCharCount = $("#textCharCount");
+  const pasteToTextareaBtn = $("#pasteToTextarea");
+  const clearTextBtn = $("#clearTextBtn");
+
+  if (textInput && textCharCount) {
+    textInput.addEventListener("input", () => {
+      textCharCount.textContent = `${textInput.value.length} characters`;
+    });
+  }
+
+  if (pasteToTextareaBtn && textInput) {
+    pasteToTextareaBtn.addEventListener("click", async () => {
+      try {
+        const text = await navigator.clipboard.readText();
+        if (text) {
+          textInput.value = text;
+          textCharCount.textContent = `${text.length} characters`;
+          toast("Pasted from clipboard!");
+        } else {
+          toast("Clipboard is empty.");
+        }
+      } catch (err) {
+        toast("Unable to read clipboard automatically. Press Ctrl+V / Cmd+V.");
+      }
+    });
+  }
+
+  if (clearTextBtn && textInput) {
+    clearTextBtn.addEventListener("click", () => {
+      textInput.value = "";
+      if (textCharCount) textCharCount.textContent = "0 characters";
+    });
+  }
+
+  /* ---------- Settings & Switches ---------- */
   const settingsToggle = $("#settingsToggle");
   const settingsBody = $("#settingsBody");
   if (settingsToggle && settingsBody) {
@@ -244,19 +285,31 @@
     });
   });
 
-  /* ---------- Upload flow ---------- */
+  /* ---------- Multiple Files Upload Flow ---------- */
   const dropzone = $("#dropzone");
   const fileInput = $("#fileInput");
   const filePreview = $("#filePreview");
+  const fileList = $("#fileList");
+  const fileSummary = $("#fileSummary");
   const uploadHint = $("#uploadHint");
-  const panes = { drop: $("#paneDrop"), progress: $("#paneProgress"), success: $("#paneSuccess") };
-  let currentFile = null;
+  const clearFilesBtn = $("#clearFiles");
+  const panes = { drop: $("#paneDrop"), text: $("#paneText"), progress: $("#paneProgress"), success: $("#paneSuccess") };
+  
+  let currentFiles = []; 
   let timer = null;
 
   function showPane(name) {
-    Object.keys(panes).forEach((k) => { 
-      if (panes[k]) panes[k].hidden = k !== name; 
-    });
+    $("#paneDrop").hidden = true;
+    $("#paneText").hidden = true;
+    $("#paneProgress").hidden = true;
+    $("#paneSuccess").hidden = true;
+    
+    if (name === "drop") {
+      if (activeMode === "files") $("#paneDrop").hidden = false;
+      else $("#paneText").hidden = false;
+    } else {
+      if (panes[name]) panes[name].hidden = false;
+    }
   }
 
   function setHint(msg, isError) {
@@ -265,19 +318,68 @@
     uploadHint.classList.toggle("is-error", !!isError);
   }
 
-  function selectFile(file) {
-    if (!file) return;
-    if (file.size > MAX_SIZE) {
-      setHint("That file is " + formatBytes(file.size) + " — the limit is 200 MB.", true);
+  function renderFileList() {
+    if (!fileList || !filePreview) return;
+
+    if (currentFiles.length === 0) {
+      filePreview.hidden = true;
       return;
     }
-    currentFile = file;
-    setHint("");
-    const fileName = $("#fileName");
-    const fileSize = $("#fileSize");
-    if (fileName) fileName.textContent = file.name;
-    if (fileSize) fileSize.textContent = formatBytes(file.size) + (file.type ? " · " + file.type : "");
-    if (filePreview) filePreview.hidden = false;
+
+    filePreview.hidden = false;
+    const totalSize = currentFiles.reduce((acc, f) => acc + f.size, 0);
+    if (fileSummary) {
+      fileSummary.textContent = `${currentFiles.length} ${currentFiles.length === 1 ? "file" : "files"} (${formatBytes(totalSize)})`;
+    }
+
+    fileList.innerHTML = currentFiles.map((f, i) => `
+      <div class="file-item">
+        <span class="file-ico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+        </span>
+        <div class="file-info">
+          <strong>${f.name}</strong>
+          <small>${formatBytes(f.size)}</small>
+        </div>
+        <button class="remove-file-btn" type="button" data-index="${i}" aria-label="Remove file">&times;</button>
+      </div>
+    `).join("");
+
+    $$(".remove-file-btn", fileList).forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const idx = parseInt(btn.dataset.index, 10);
+        currentFiles.splice(idx, 1);
+        renderFileList();
+      });
+    });
+  }
+
+  function addFiles(files) {
+    if (!files || !files.length) return;
+    const incoming = Array.from(files);
+    let totalSize = currentFiles.reduce((acc, f) => acc + f.size, 0);
+
+    for (const f of incoming) {
+      if (totalSize + f.size > MAX_SIZE) {
+        setHint("Batch exceeds maximum total size of 200 MB.", true);
+        break;
+      }
+      currentFiles.push(f);
+      totalSize += f.size;
+      setHint("");
+    }
+
+    renderFileList();
+  }
+
+  if (clearFilesBtn) {
+    clearFilesBtn.addEventListener("click", () => {
+      currentFiles = [];
+      if (fileInput) fileInput.value = "";
+      renderFileList();
+      setHint("");
+    });
   }
 
   if (dropzone && fileInput) {
@@ -288,18 +390,23 @@
     dropzone.addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileInput.click(); }
     });
-    fileInput.addEventListener("change", () => selectFile(fileInput.files[0]));
+
+    fileInput.addEventListener("change", () => {
+      addFiles(fileInput.files);
+      fileInput.value = "";
+    });
 
     ["dragenter", "dragover"].forEach((ev) =>
       dropzone.addEventListener(ev, (e) => { e.preventDefault(); dropzone.classList.add("is-over"); }));
     ["dragleave", "drop"].forEach((ev) =>
       dropzone.addEventListener(ev, (e) => { e.preventDefault(); dropzone.classList.remove("is-over"); }));
     dropzone.addEventListener("drop", (e) => {
-      if (e.dataTransfer && e.dataTransfer.files.length) selectFile(e.dataTransfer.files[0]);
+      if (e.dataTransfer && e.dataTransfer.files.length) {
+        addFiles(e.dataTransfer.files);
+      }
     });
   }
 
-  /* Paste clipboard handler */
   const pasteBtn = $("#pasteBtn");
   if (pasteBtn) {
     pasteBtn.addEventListener("click", async (e) => {
@@ -307,48 +414,66 @@
       try {
         if (navigator.clipboard && navigator.clipboard.read) {
           const items = await navigator.clipboard.read();
+          const pasted = [];
           for (const item of items) {
             const type = item.types.find((t) => t !== "text/plain");
             if (type) {
               const blob = await item.getType(type);
-              return selectFile(new File([blob], "clipboard." + type.split("/")[1], { type }));
+              pasted.push(new File([blob], "clipboard." + type.split("/")[1], { type }));
             }
           }
+          if (pasted.length) return addFiles(pasted);
         }
         const text = await navigator.clipboard.readText();
         if (text && text.trim()) {
-          return selectFile(new File([text], "clipboard.txt", { type: "text/plain" }));
+          return addFiles([new File([text], "clipboard.txt", { type: "text/plain" })]);
         }
         setHint("Clipboard is empty.", true);
       } catch (err) {
-        setHint("Clipboard access was blocked — use Browse Files instead.", true);
+        setHint("Clipboard access blocked — try pasting manually.", true);
       }
     });
   }
 
-  window.addEventListener("paste", (e) => {
-    const f = e.clipboardData && e.clipboardData.files[0];
-    if (f) selectFile(f);
-  });
-
-  /* Upload Execution (API HOOK: replace with real XHR/Fetch) */
+  /* Start Share Button Execution */
   const startBtn = $("#startUpload");
   if (startBtn) {
     startBtn.addEventListener("click", () => {
-      if (!currentFile) return;
+      if (activeMode === "files") {
+        if (!currentFiles.length) {
+          setHint("Please select or drop at least one file.", true);
+          return;
+        }
+      } else {
+        if (!textInput || !textInput.value.trim()) {
+          setHint("Please enter or paste text to share.", true);
+          return;
+        }
+      }
+
+      setHint("");
       const progName = $("#progName");
       const progSize = $("#progSize");
-      if (progName) progName.textContent = currentFile.name;
-      if (progSize) progSize.textContent = formatBytes(currentFile.size);
+
+      if (activeMode === "files") {
+        const totalBatchSize = currentFiles.reduce((acc, f) => acc + f.size, 0);
+        if (progName) progName.textContent = currentFiles.length === 1 ? currentFiles[0].name : `${currentFiles.length} Files Batch`;
+        if (progSize) progSize.textContent = formatBytes(totalBatchSize);
+      } else {
+        if (progName) progName.textContent = "Text Note / Snippet";
+        if (progSize) progSize.textContent = `${textInput.value.length} chars`;
+      }
+
       showPane("progress");
 
       let loaded = 0;
+      const targetSize = activeMode === "files" ? currentFiles.reduce((acc, f) => acc + f.size, 0) : 10000;
       const bar = $("#progBar");
       
       timer = setInterval(() => {
         const speed = (900 + Math.random() * 2600) * 1024;
-        loaded = Math.min(currentFile.size, loaded + speed * 0.2);
-        const pct = Math.round((loaded / currentFile.size) * 100);
+        loaded = Math.min(targetSize, loaded + speed * 0.2);
+        const pct = Math.round((loaded / targetSize) * 100);
         if (bar) bar.style.width = pct + "%";
         
         const progPct = $("#progPct");
@@ -357,14 +482,14 @@
         
         if (progPct) progPct.textContent = pct + "%";
         if (progSpeed) progSpeed.textContent = formatBytes(speed) + "/s";
-        if (progEta) progEta.textContent = formatTime((currentFile.size - loaded) / speed);
+        if (progEta) progEta.textContent = formatTime((targetSize - loaded) / speed);
         
         if (pct >= 100) { 
           clearInterval(timer); 
           timer = null; 
           finishUpload(); 
         }
-      }, 200);
+      }, 150);
     });
   }
 
@@ -376,7 +501,7 @@
       const bar = $("#progBar");
       if (bar) bar.style.width = "0%";
       showPane("drop");
-      toast("Upload cancelled");
+      toast("Sharing cancelled");
     });
   }
 
@@ -409,9 +534,11 @@
   const newUploadBtn = $("#newUpload");
   if (newUploadBtn) {
     newUploadBtn.addEventListener("click", () => {
-      currentFile = null;
+      currentFiles = [];
       if (fileInput) fileInput.value = "";
-      if (filePreview) filePreview.hidden = true;
+      if (textInput) textInput.value = "";
+      if (textCharCount) textCharCount.textContent = "0 characters";
+      renderFileList();
       const bar = $("#progBar");
       if (bar) bar.style.width = "0%";
       setHint("");
@@ -429,14 +556,14 @@
         : (shareLink ? shareLink.value : "");
       try {
         await navigator.clipboard.writeText(value);
-        toast("Copied to clipboard");
+        toast("Copied to clipboard!");
       } catch (err) {
-        toast("Copy failed — select and copy manually");
+        toast("Copy failed — select manually.");
       }
     });
   });
 
-  /* ---------- Download flow ---------- */
+  /* ---------- Retrieval / Download Flow ---------- */
   const codeInputs = $$(".code-input input");
   codeInputs.forEach((input, i) => {
     input.addEventListener("input", () => {
@@ -463,6 +590,9 @@
       const code = codeInputs.map((i) => i.value).join("");
       const hint = $("#dlHint");
       const prevCard = $("#previewCard");
+      const fileRetrieved = $("#retrievedFileContent");
+      const textRetrieved = $("#retrievedTextContent");
+      const retrievedTextVal = $("#retrievedTextVal");
 
       if (code.length < 4) {
         if (hint) {
@@ -473,12 +603,38 @@
         return;
       }
 
-      // API HOOK: Replace with fetch/XHR lookup (e.g. GET /api/files/:code)
       if (hint) {
-        hint.textContent = "File found for code " + code + ".";
+        hint.textContent = "Content found for code " + code + ".";
         hint.classList.remove("is-error");
       }
       if (prevCard) prevCard.hidden = false;
+
+      // Sample lookup logic switch based on code
+      if (code.endsWith("0")) {
+        // Show Text result
+        if (fileRetrieved) fileRetrieved.hidden = true;
+        if (textRetrieved) textRetrieved.hidden = false;
+        if (retrievedTextVal) retrievedTextVal.value = "Sample text retrieved for code " + code + ":\nhttps://vegashare.app\nWiFi Password: SecurePass123!";
+      } else {
+        // Show File result
+        if (fileRetrieved) fileRetrieved.hidden = false;
+        if (textRetrieved) textRetrieved.hidden = true;
+      }
+    });
+  }
+
+  const copyRetrievedTextBtn = $("#copyRetrievedText");
+  if (copyRetrievedTextBtn) {
+    copyRetrievedTextBtn.addEventListener("click", async () => {
+      const textVal = $("#retrievedTextVal");
+      if (textVal && textVal.value) {
+        try {
+          await navigator.clipboard.writeText(textVal.value);
+          toast("Text copied to clipboard!");
+        } catch (err) {
+          toast("Copy failed.");
+        }
+      }
     });
   }
 
