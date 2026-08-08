@@ -1,5 +1,5 @@
 /* ============================================================
-   VegaShare — script.js
+   VegaShare — js/script.js (E2EE + Node.js / Express Backend)
    ============================================================ */
 (function () {
   "use strict";
@@ -7,20 +7,13 @@
   /* ---------- Utils ---------- */
   const $ = (sel, root) => (root || document).querySelector(sel);
   const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
-  const MAX_SIZE = 200 * 1024 * 1024; // 200MB limit for batch total
+  const MAX_SIZE = 15 * 1024 * 1024; // 15MB limit matching backend configuration
 
   function formatBytes(bytes) {
     if (!bytes) return "0 B";
     const units = ["B", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(1024));
     return (bytes / Math.pow(1024, i)).toFixed(i ? 1 : 0) + " " + units[i];
-  }
-
-  function formatTime(sec) {
-    if (!isFinite(sec) || sec < 0) return "—";
-    if (sec < 60) return Math.ceil(sec) + "s";
-    const m = Math.floor(sec / 60);
-    return m + "m " + Math.round(sec % 60) + "s";
   }
 
   const EXPIRY_LABEL = {
@@ -42,7 +35,86 @@
     toastTimer = setTimeout(() => el.classList.remove("is-show"), 2400);
   }
 
-  /* ---------- Theme (Default Light + User Toggle) ---------- */
+  /* User-friendly helper to safely parse API responses */
+  async function parseApiResponse(response) {
+    const contentType = response.headers.get("content-type");
+    
+    if (contentType && contentType.includes("application/json")) {
+      return await response.json();
+    } else {
+      if (response.status === 404) {
+        throw new Error("Unable to connect to the sharing service. Please try again in a moment.");
+      } else if (response.status >= 500) {
+        throw new Error("Something went wrong on our end. Please try again later.");
+      } else {
+        throw new Error("Service temporarily unavailable. Please check your internet connection.");
+      }
+    }
+  }
+
+  /* ---------- Web Crypto E2EE Utils ---------- */
+  async function deriveKeyFromPin(pin, saltHex) {
+    const enc = new TextEncoder();
+    const salt = saltHex 
+      ? new Uint8Array(saltHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16))) 
+      : window.crypto.getRandomValues(new Uint8Array(16));
+    
+    const keyMaterial = await window.crypto.subtle.importKey(
+      "raw",
+      enc.encode(pin),
+      "PBKDF2",
+      false,
+      ["deriveKey"]
+    );
+
+    const key = await window.crypto.subtle.deriveKey(
+      {
+        name: "PBKDF2",
+        salt: salt,
+        iterations: 100000,
+        hash: "SHA-256",
+      },
+      keyMaterial,
+      { name: "AES-GCM", length: 256 },
+      false,
+      ["encrypt", "decrypt"]
+    );
+
+    const saltHexStr = Array.from(salt).map(b => b.toString(16).padStart(2, '0')).join('');
+    return { key, saltHex: saltHexStr };
+  }
+
+  async function encryptData(arrayBufferOrString, pin) {
+    const { key, saltHex } = await deriveKeyFromPin(pin);
+    const iv = window.crypto.getRandomValues(new Uint8Array(12));
+    const enc = new TextEncoder();
+    
+    const dataToEncrypt = typeof arrayBufferOrString === "string" 
+      ? enc.encode(arrayBufferOrString) 
+      : arrayBufferOrString;
+
+    const encryptedBuffer = await window.crypto.subtle.encrypt(
+      { name: "AES-GCM", iv: iv },
+      key,
+      dataToEncrypt
+    );
+
+    const ivHexStr = Array.from(iv).map(b => b.toString(16).padStart(2, '0')).join('');
+    return { encryptedBuffer, saltHex, ivHex: ivHexStr };
+  }
+
+  async function decryptData(encryptedArrayBuffer, pin, saltHex, ivHex) {
+    const { key } = await deriveKeyFromPin(pin, saltHex);
+    const iv = new Uint8Array(ivHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+
+    return await window.crypto.subtle.decrypt(
+      { name: "AES-GCM", iv: iv },
+      key,
+      encryptedArrayBuffer
+    );
+  }
+
+  /* ---------- Theme Handler ---------- */
   const themeBtn = $("#themeToggle");
   const storedTheme = localStorage.getItem("vega-theme");
 
@@ -53,8 +125,7 @@
     }
   }
 
-  const initialTheme = storedTheme || "light";
-  applyTheme(initialTheme);
+  applyTheme(storedTheme || "light");
 
   if (themeBtn) {
     themeBtn.addEventListener("click", () => {
@@ -64,7 +135,7 @@
     });
   }
 
-  /* ---------- Navigation ---------- */
+  /* ---------- Navigation & Mobile Menu ---------- */
   const nav = $("#nav");
   const burger = $("#burger");
   const menu = $("#mobileMenu");
@@ -89,7 +160,7 @@
     }));
   }
 
-  /* Bottom nav active state tracking */
+  /* Bottom nav tracking */
   const bottomLinks = $$(".bottom-nav a[href^='#']");
   const sections = ["home", "download", "upload", "faq", "about"].map((id) => document.getElementById(id));
   
@@ -100,7 +171,7 @@
     bottomLinks.forEach((l) => l.classList.toggle("is-active", active && l.getAttribute("href") === "#" + active.id));
   }, { passive: true });
 
-  /* ---------- Scroll reveal ---------- */
+  /* ---------- Scroll Reveal & Ripples ---------- */
   const io = "IntersectionObserver" in window
     ? new IntersectionObserver((entries) => {
         entries.forEach((en) => { 
@@ -119,7 +190,6 @@
   
   $$(".reveal").forEach(observe);
 
-  /* ---------- Ripple effect ---------- */
   document.addEventListener("pointerdown", (e) => {
     const btn = e.target.closest(".ripple");
     if (!btn) return;
@@ -134,7 +204,7 @@
     setTimeout(() => wave.remove(), 640);
   });
 
-  /* ---------- Features ---------- */
+  /* ---------- Features & FAQ Components ---------- */
   const ICONS = {
     bolt: '<path d="M13 2 4 14h6l-1 8 9-12h-6z"/>',
     mask: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
@@ -150,7 +220,7 @@
     ["bolt", "Fast Transfer", "Share multiple files or clipboard text notes in seconds."],
     ["mask", "Anonymous", "No accounts, no emails, no tracking. Just a 4-digit retrieval code."],
     ["clock", "Temporary Storage", "Pick an expiry from 15 minutes to 24 hours."],
-    ["lock", "Encrypted Sharing", "TLS in transit plus optional password protection."],
+    ["lock", "Encrypted Sharing", "Client-side AES-GCM encryption before payload upload."],
     ["gauge", "Access Limits", "Cap downloads/views from 5 to 50, or make it one-time only."],
     ["trash", "Auto Delete", "Files and text are purged permanently the moment they expire."],
     ["cloud", "Cloud Ready", "Seamlessly integrates into any Express + MongoDB stack."],
@@ -167,13 +237,12 @@
     $$("#features .reveal").forEach(observe);
   }
 
-  /* ---------- FAQ accordion ---------- */
   const FAQS = [
     ["Do I need an account to use VegaShare?", "Never. Uploading files or sharing text is completely anonymous — the 4-digit code is the only thing needed."],
-    ["Can I share plain text or code snippets?", "Yes! Use the 'Share Text / Clipboard' tab to quickly send text, links, WiFi passwords, or code snippets."],
-    ["What is the maximum file size?", "You can upload multiple files up to 200 MB total per batch."],
-    ["What happens when content expires?", "Files, text notes, and metadata are permanently erased from the server."],
-    ["Are my items encrypted?", "All transfers use TLS encryption, and optional password protection ensures only keyholders can open items."]
+    ["Can I share plain text or code snippets?", "Yes! Use the 'Share Text / Clipboard' tab to send encrypted text notes."],
+    ["What is the maximum file size?", "You can upload files up to 15 MB total per batch."],
+    ["What happens when content expires?", "Files, text notes, and database records are permanently purged."],
+    ["Are my items encrypted?", "Yes! Data is encrypted in your browser using AES-256-GCM before transmission."]
   ];
 
   const faqContainer = $("#faqList");
@@ -198,12 +267,12 @@
     });
   }
 
-  /* ---------- Sharing Mode Tabs (Files vs Text) ---------- */
+  /* ---------- Mode Tabs ---------- */
   const tabFiles = $("#tabFiles");
   const tabText = $("#tabText");
   const paneDrop = $("#paneDrop");
   const paneText = $("#paneText");
-  let activeMode = "files"; // "files" | "text"
+  let activeMode = "files";
 
   if (tabFiles && tabText) {
     tabFiles.addEventListener("click", () => {
@@ -227,7 +296,7 @@
     });
   }
 
-  /* ---------- Text / Clipboard Sharing Logic ---------- */
+  /* ---------- Text / Clipboard Tab ---------- */
   const textInput = $("#textInput");
   const textCharCount = $("#textCharCount");
   const pasteToTextareaBtn = $("#pasteToTextarea");
@@ -251,7 +320,7 @@
           toast("Clipboard is empty.");
         }
       } catch (err) {
-        toast("Unable to read clipboard automatically. Press Ctrl+V / Cmd+V.");
+        toast("Unable to read clipboard. Press Ctrl+V / Cmd+V.");
       }
     });
   }
@@ -285,18 +354,15 @@
     });
   });
 
-  /* ---------- Multiple Files Upload Flow ---------- */
+  /* ---------- File Dropzone Handler ---------- */
   const dropzone = $("#dropzone");
   const fileInput = $("#fileInput");
   const filePreview = $("#filePreview");
   const fileList = $("#fileList");
   const fileSummary = $("#fileSummary");
   const uploadHint = $("#uploadHint");
-  const clearFilesBtn = $("#clearFiles");
-  const panes = { drop: $("#paneDrop"), text: $("#paneText"), progress: $("#paneProgress"), success: $("#paneSuccess") };
   
-  let currentFiles = []; 
-  let timer = null;
+  let currentFiles = [];
 
   function showPane(name) {
     $("#paneDrop").hidden = true;
@@ -308,7 +374,8 @@
       if (activeMode === "files") $("#paneDrop").hidden = false;
       else $("#paneText").hidden = false;
     } else {
-      if (panes[name]) panes[name].hidden = false;
+      const paneEl = $(`#pane${name.charAt(0).toUpperCase() + name.slice(1)}`);
+      if (paneEl) paneEl.hidden = false;
     }
   }
 
@@ -362,7 +429,7 @@
 
     for (const f of incoming) {
       if (totalSize + f.size > MAX_SIZE) {
-        setHint("Batch exceeds maximum total size of 200 MB.", true);
+        setHint("Please select files under 15 MB total.", true);
         break;
       }
       currentFiles.push(f);
@@ -371,15 +438,6 @@
     }
 
     renderFileList();
-  }
-
-  if (clearFilesBtn) {
-    clearFilesBtn.addEventListener("click", () => {
-      currentFiles = [];
-      if (fileInput) fileInput.value = "";
-      renderFileList();
-      setHint("");
-    });
   }
 
   if (dropzone && fileInput) {
@@ -407,146 +465,100 @@
     });
   }
 
-  const pasteBtn = $("#pasteBtn");
-  if (pasteBtn) {
-    pasteBtn.addEventListener("click", async (e) => {
-      e.stopPropagation();
-      try {
-        if (navigator.clipboard && navigator.clipboard.read) {
-          const items = await navigator.clipboard.read();
-          const pasted = [];
-          for (const item of items) {
-            const type = item.types.find((t) => t !== "text/plain");
-            if (type) {
-              const blob = await item.getType(type);
-              pasted.push(new File([blob], "clipboard." + type.split("/")[1], { type }));
-            }
-          }
-          if (pasted.length) return addFiles(pasted);
-        }
-        const text = await navigator.clipboard.readText();
-        if (text && text.trim()) {
-          return addFiles([new File([text], "clipboard.txt", { type: "text/plain" })]);
-        }
-        setHint("Clipboard is empty.", true);
-      } catch (err) {
-        setHint("Clipboard access blocked — try pasting manually.", true);
-      }
-    });
-  }
-
-  /* Start Share Button Execution */
+  /* ---------- END-TO-END ENCRYPTED UPLOAD ---------- */
   const startBtn = $("#startUpload");
   if (startBtn) {
-    startBtn.addEventListener("click", () => {
-      if (activeMode === "files") {
-        if (!currentFiles.length) {
-          setHint("Please select or drop at least one file.", true);
-          return;
-        }
-      } else {
-        if (!textInput || !textInput.value.trim()) {
-          setHint("Please enter or paste text to share.", true);
-          return;
-        }
-      }
+    startBtn.addEventListener("click", async () => {
+      const generatedPin = Math.floor(1000 + Math.random() * 9000).toString();
+      let encryptionResult;
+
+      const formData = new FormData();
+      formData.append("type", activeMode);
 
       setHint("");
-      const progName = $("#progName");
-      const progSize = $("#progSize");
 
-      if (activeMode === "files") {
-        const totalBatchSize = currentFiles.reduce((acc, f) => acc + f.size, 0);
-        if (progName) progName.textContent = currentFiles.length === 1 ? currentFiles[0].name : `${currentFiles.length} Files Batch`;
-        if (progSize) progSize.textContent = formatBytes(totalBatchSize);
-      } else {
-        if (progName) progName.textContent = "Text Note / Snippet";
-        if (progSize) progSize.textContent = `${textInput.value.length} chars`;
-      }
+      try {
+        if (activeMode === "files") {
+          if (!currentFiles.length) {
+            setHint("Please select or drop at least one file.", true);
+            return;
+          }
+          showPane("progress");
 
-      showPane("progress");
+          // Encrypt file buffer using generated PIN
+          const arrayBuffer = await currentFiles[0].arrayBuffer();
+          encryptionResult = await encryptData(arrayBuffer, generatedPin);
 
-      let loaded = 0;
-      const targetSize = activeMode === "files" ? currentFiles.reduce((acc, f) => acc + f.size, 0) : 10000;
-      const bar = $("#progBar");
-      
-      timer = setInterval(() => {
-        const speed = (900 + Math.random() * 2600) * 1024;
-        loaded = Math.min(targetSize, loaded + speed * 0.2);
-        const pct = Math.round((loaded / targetSize) * 100);
-        if (bar) bar.style.width = pct + "%";
-        
-        const progPct = $("#progPct");
-        const progSpeed = $("#progSpeed");
-        const progEta = $("#progEta");
-        
-        if (progPct) progPct.textContent = pct + "%";
-        if (progSpeed) progSpeed.textContent = formatBytes(speed) + "/s";
-        if (progEta) progEta.textContent = formatTime((targetSize - loaded) / speed);
-        
-        if (pct >= 100) { 
-          clearInterval(timer); 
-          timer = null; 
-          finishUpload(); 
+          const encryptedBlob = new File([encryptionResult.encryptedBuffer], currentFiles[0].name, { type: "application/octet-stream" });
+          formData.append("files", encryptedBlob);
+
+        } else {
+          const rawText = textInput ? textInput.value : "";
+          if (!rawText.trim()) {
+            setHint("Please enter or paste text to share.", true);
+            return;
+          }
+          showPane("progress");
+
+          // Encrypt text string using generated PIN
+          encryptionResult = await encryptData(rawText, generatedPin);
+          const encryptedHex = Array.from(new Uint8Array(encryptionResult.encryptedBuffer))
+            .map(b => b.toString(16).padStart(2, '0')).join('');
+
+          formData.append("textContent", encryptedHex);
         }
-      }, 150);
+
+        formData.append("code", generatedPin);
+        formData.append("cryptoSalt", encryptionResult.saltHex);
+        formData.append("cryptoIv", encryptionResult.ivHex);
+
+        const expiryMinutes = $("#expiry")?.value;
+        formData.append("expiryMinutes", expiryMinutes && parseInt(expiryMinutes, 10) > 0 ? expiryMinutes : "15");
+        formData.append("maxDownloads", $("#maxDownloads")?.value || "5");
+        formData.append("oneTimeAccess", $("#onceToggle")?.classList.contains("is-on") || false);
+
+        const response = await fetch("/api/share", {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await parseApiResponse(response);
+
+        if (!response.ok) {
+          throw new Error(data.error || "Upload could not be completed. Please try again.");
+        }
+
+        const codeDigits = $("#codeDigits");
+        const shareLink = $("#shareLink");
+        const expiresIn = $("#expiresIn");
+        const remDl = $("#remDl");
+
+        if (codeDigits) codeDigits.innerHTML = data.code.split("").map((d) => `<b>${d}</b>`).join("");
+        if (shareLink) shareLink.value = data.shareLink;
+        if (expiresIn) expiresIn.textContent = EXPIRY_LABEL[$("#expiry")?.value] || "15 Minutes";
+
+        const isOnce = $("#onceToggle")?.classList.contains("is-on");
+        const maxVal = $("#maxDownloads")?.value || "5";
+        if (remDl) remDl.textContent = isOnce ? "1 / 1" : `${maxVal} / ${maxVal}`;
+
+        showPane("success");
+      } catch (err) {
+        showPane("drop");
+        setHint(err.message || "Upload failed. Please check your connection and try again.", true);
+      }
     });
   }
 
-  const cancelBtn = $("#cancelUpload");
-  if (cancelBtn) {
-    cancelBtn.addEventListener("click", () => {
-      if (timer) clearInterval(timer);
-      timer = null;
-      const bar = $("#progBar");
-      if (bar) bar.style.width = "0%";
-      showPane("drop");
-      toast("Sharing cancelled");
-    });
-  }
+  $("#newUpload")?.addEventListener("click", () => {
+    currentFiles = [];
+    if (fileInput) fileInput.value = "";
+    if ($("#textInput")) $("#textInput").value = "";
+    renderFileList();
+    setHint("");
+    showPane("drop");
+  });
 
-  function finishUpload() {
-    const expiryEl = $("#expiry");
-    const maxDlEl = $("#maxDownloads");
-    const onceToggle = $("#onceToggle");
-    const qrToggle = $("#qrToggle");
-
-    const expiry = expiryEl ? expiryEl.value : "15";
-    const max = maxDlEl ? maxDlEl.value : "5";
-    const once = onceToggle ? onceToggle.classList.contains("is-on") : false;
-    const code = String(Math.floor(1000 + Math.random() * 9000));
-
-    const codeDigits = $("#codeDigits");
-    const shareLink = $("#shareLink");
-    const expiresIn = $("#expiresIn");
-    const remDl = $("#remDl");
-    const qrWrap = $("#qrWrap");
-
-    if (codeDigits) codeDigits.innerHTML = code.split("").map((d) => "<b>" + d + "</b>").join("");
-    if (shareLink) shareLink.value = window.location.origin + "/d/" + code;
-    if (expiresIn) expiresIn.textContent = EXPIRY_LABEL[expiry] || expiry + " Minutes";
-    if (remDl) remDl.textContent = once ? "1 / 1" : max + " / " + max;
-    if (qrWrap && qrToggle) qrWrap.hidden = !qrToggle.classList.contains("is-on");
-    
-    showPane("success");
-  }
-
-  const newUploadBtn = $("#newUpload");
-  if (newUploadBtn) {
-    newUploadBtn.addEventListener("click", () => {
-      currentFiles = [];
-      if (fileInput) fileInput.value = "";
-      if (textInput) textInput.value = "";
-      if (textCharCount) textCharCount.textContent = "0 characters";
-      renderFileList();
-      const bar = $("#progBar");
-      if (bar) bar.style.width = "0%";
-      setHint("");
-      showPane("drop");
-    });
-  }
-
-  /* Copy Button Handlers */
+  /* ---------- Copy Handlers ---------- */
   $$("[data-copy]").forEach((btn) => {
     btn.addEventListener("click", async () => {
       const codeDigits = $("#codeDigits");
@@ -558,12 +570,12 @@
         await navigator.clipboard.writeText(value);
         toast("Copied to clipboard!");
       } catch (err) {
-        toast("Copy failed — select manually.");
+        toast("Copy failed — please select text manually.");
       }
     });
   });
 
-  /* ---------- Retrieval / Download Flow ---------- */
+  /* ---------- END-TO-END DECRYPTED RETRIEVAL ---------- */
   const codeInputs = $$(".code-input input");
   codeInputs.forEach((input, i) => {
     input.addEventListener("input", () => {
@@ -585,40 +597,82 @@
 
   const codeForm = $("#codeForm");
   if (codeForm) {
-    codeForm.addEventListener("submit", (e) => {
+    codeForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       const code = codeInputs.map((i) => i.value).join("");
       const hint = $("#dlHint");
       const prevCard = $("#previewCard");
-      const fileRetrieved = $("#retrievedFileContent");
-      const textRetrieved = $("#retrievedTextContent");
-      const retrievedTextVal = $("#retrievedTextVal");
 
       if (code.length < 4) {
         if (hint) {
-          hint.textContent = "Enter all four digits of your code.";
+          hint.textContent = "Please enter all four digits of your code.";
           hint.classList.add("is-error");
         }
         if (prevCard) prevCard.hidden = true;
         return;
       }
 
-      if (hint) {
-        hint.textContent = "Content found for code " + code + ".";
-        hint.classList.remove("is-error");
-      }
-      if (prevCard) prevCard.hidden = false;
+      try {
+        const response = await fetch("/api/retrieve", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code }),
+        });
 
-      // Sample lookup logic switch based on code
-      if (code.endsWith("0")) {
-        // Show Text result
-        if (fileRetrieved) fileRetrieved.hidden = true;
-        if (textRetrieved) textRetrieved.hidden = false;
-        if (retrievedTextVal) retrievedTextVal.value = "Sample text retrieved for code " + code + ":\nhttps://vegashare.app\nWiFi Password: SecurePass123!";
-      } else {
-        // Show File result
-        if (fileRetrieved) fileRetrieved.hidden = false;
-        if (textRetrieved) textRetrieved.hidden = true;
+        const data = await parseApiResponse(response);
+
+        if (!response.ok) {
+          throw new Error(data.error || "Code expired or invalid. Please double-check your code.");
+        }
+
+        if (hint) {
+          hint.textContent = "Content retrieved and decrypted successfully!";
+          hint.classList.remove("is-error");
+        }
+        if (prevCard) prevCard.hidden = false;
+
+        // Decrypt Encrypted Text Payload
+        if (data.type === "text") {
+          $("#retrievedFileContent").hidden = true;
+          $("#retrievedTextContent").hidden = false;
+
+          const hexBuffer = new Uint8Array(data.textContent.match(/.{1,2}/g).map(byte => parseInt(byte, 16))).buffer;
+          const decryptedBuffer = await decryptData(hexBuffer, code, data.cryptoSalt, data.cryptoIv);
+          
+          $("#retrievedTextVal").value = new TextDecoder().decode(decryptedBuffer);
+        } 
+        // Decrypt Encrypted File Payload
+        else {
+          $("#retrievedTextContent").hidden = true;
+          $("#retrievedFileContent").hidden = false;
+
+          const firstFile = data.files[0];
+          $("#retrievedFileName").textContent = firstFile.originalName;
+          $("#retrievedFileSize").textContent = `${formatBytes(firstFile.size)} · Encrypted File`;
+          $("#retrievedExpiry").textContent = new Date(data.expireAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          $("#retrievedRemDl").textContent = `${data.downloadsRemaining} left`;
+
+          $("#downloadFileBtn").onclick = async () => {
+            try {
+              const encArrayBuffer = new Uint8Array(firstFile.data.match(/.{1,2}/g).map(byte => parseInt(byte, 16))).buffer;
+              const decryptedBuffer = await decryptData(encArrayBuffer, code, data.cryptoSalt, data.cryptoIv);
+
+              const blob = new Blob([decryptedBuffer], { type: firstFile.mimetype || "application/octet-stream" });
+              const link = document.createElement("a");
+              link.href = URL.createObjectURL(blob);
+              link.download = firstFile.originalName;
+              link.click();
+            } catch (err) {
+              toast("Decryption failed. Please verify the retrieval code.");
+            }
+          };
+        }
+      } catch (err) {
+        if (hint) {
+          hint.textContent = err.message || "Unable to retrieve content. Please try again.";
+          hint.classList.add("is-error");
+        }
+        if (prevCard) prevCard.hidden = true;
       }
     });
   }
@@ -638,7 +692,7 @@
     });
   }
 
-  /* ---------- Footer Year ---------- */
+  /* ---------- Dynamic Footer Year ---------- */
   const yearEl = $("#year");
   if (yearEl) yearEl.textContent = new Date().getFullYear();
 })();

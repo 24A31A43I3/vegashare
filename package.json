@@ -1,0 +1,30 @@
+{
+  "name": "vegashare-version-2",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/24A31A43I3/vegashare.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/24A31A43I3/vegashare/issues"
+  },
+  "homepage": "https://github.com/24A31A43I3/vegashare#readme",
+  "description": "",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.6.2",
+    "mongoose": "^9.9.1",
+    "multer": "^2.2.0"
+  }
+}

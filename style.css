@@ -591,3 +591,14 @@ html[data-theme="dark"] .icon-moon { display: block; }
 link[rel="icon"] {
   border-radius: 50%;
 }
+/* Professional Error Display */
+.hint.is-error {
+  color: #DC2626;
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  padding: 8px 14px;
+  border-radius: var(--r-md);
+  font-weight: 500;
+  display: inline-block;
+  margin-top: 12px;
+}
