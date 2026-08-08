@@ -9,24 +9,24 @@ require("dotenv").config();
 const Share = require("./models/Share");
 const app = express();
 
-// Enable trust proxy for Render (Required for rate limiter to correctly identify client IPs)
+// Enable trust proxy for Render load balancers (Ensures accurate rate-limiting by IP)
 app.set("trust proxy", 1);
 
-// Middleware
+// Middlewares
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static frontend files
+// Serve static frontend assets (HTML, CSS, JS)
 app.use(express.static(path.join(__dirname)));
 
 // ----------------------------------------------------
 // SECURITY: RATE LIMITERS (Prevents Brute-Force & DoS)
 // ----------------------------------------------------
-// Strict limiter for retrieval (Prevents 4-digit PIN brute-forcing)
+// Strict limiter for payload retrieval (Prevents 4-digit PIN brute-forcing)
 const retrieveLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 15, // Max 15 attempts per IP per window
+  max: 15, // Max 15 attempts per IP per 15-minute window
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Too many retrieval attempts. Please wait 15 minutes." },
@@ -44,10 +44,10 @@ const shareLimiter = rateLimit({
 // 100% In-Memory Upload Config (Zero local disk usage)
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 15 * 1024 * 1024 }, // 15MB strict limit
+  limits: { fileSize: 15 * 1024 * 1024 }, // 15MB strict file limit
 });
 
-// Helper: Code Generator Fallback
+// Helper: Secure 4-digit Code Generator Fallback
 async function generateUniqueCode() {
   let code;
   let exists = true;
@@ -158,7 +158,7 @@ app.post("/api/share", shareLimiter, upload.array("files"), async (req, res) => 
     if (err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE") {
       return res.status(400).json({ error: "File exceeds strict 15 MB limit." });
     }
-    // SECURITY: Log real error to console, hide internal stack traces from client
+    // SECURITY: Log actual error internally, hide stack traces from clients
     console.error("Error in /api/share:", err);
     res.status(500).json({ error: "An error occurred while creating your share link." });
   }
@@ -215,14 +215,16 @@ app.post("/api/retrieve", retrieveLimiter, async (req, res) => {
       await Share.deleteOne({ _id: share._id });
     }
   } catch (err) {
-    // SECURITY: Safe error handling
+    // SECURITY: Log real error, return safe message
     console.error("Error in /api/retrieve:", err);
     res.status(500).json({ error: "An error occurred while retrieving content." });
   }
 });
 
-// Catch-all route for single page app routing
-app.get("*", (req, res) => {
+// ----------------------------------------------------
+// CATCH-ALL ROUTE (Express 5 Named Wildcard Fix)
+// ----------------------------------------------------
+app.get("/*splat", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
