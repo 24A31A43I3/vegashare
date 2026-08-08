@@ -1,8 +1,0 @@
-User-agent: *
-Allow: /
-Disallow: /api/
-Disallow: /node_modules/
-
-# Host and Sitemap
-Sitemap: https://vegashare.onrender.com/sitemap.xml
-Host: https://vegashare.onrender.com

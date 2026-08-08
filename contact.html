@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Terms of Service — VegaShare</title>
-<meta name="description" content="Terms of Service for VegaShare - Temporary anonymous file and text sharing platform." />
+<title>Contact Us — VegaShare</title>
+<meta name="description" content="Get in touch with the VegaShare support team. Send us your questions, feedback, or support inquiries." />
 <meta name="theme-color" content="#FAFAFB" />
 <link rel="icon" href="/favicon.ico" type="image/x-icon" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -61,47 +61,66 @@
   <section class="section">
     <div class="container narrow">
       <header class="sec-head reveal">
-        <span class="eyebrow">Legal Terms</span>
-        <h2>Terms of Service</h2>
-        <p>Last updated: August 2026</p>
+        <span class="eyebrow">Get in Touch</span>
+        <h2>Contact Us</h2>
+        <p>Have questions, feedback, or support issues? Fill out the form below and we will send a confirmation email straight to your inbox.</p>
       </header>
 
-      <div class="card reveal" style="padding: var(--s5); display: grid; gap: var(--s4);">
-        <div>
-          <h3>1. Acceptance of Terms</h3>
-          <p>By accessing or using VegaShare, you agree to be bound by these Terms of Service. If you do not agree to all terms, please do not access or use our services.</p>
-        </div>
+      <div class="card card--upload reveal">
+        <form id="contactForm" style="display: grid; gap: var(--s3);" novalidate>
+          
+          <div class="grid-2">
+            <!-- Full Name -->
+            <label class="field">
+              <span class="field__label">Full Name *</span>
+              <input type="text" id="contactName" placeholder="John Doe" maxlength="100" required />
+            </label>
 
-        <div>
-          <h3>2. Description of Service</h3>
-          <p>VegaShare provides temporary, anonymous file and text sharing services. Files and text notes uploaded to the platform are temporarily stored and automatically deleted based on user-defined timers or download limits.</p>
-        </div>
+            <!-- Gender -->
+            <label class="field">
+              <span class="field__label">Gender *</span>
+              <select id="contactGender" required>
+                <option value="" disabled selected>Select gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+                <option value="Prefer not to say">Prefer not to say</option>
+              </select>
+            </label>
+          </div>
 
-        <div>
-          <h3>3. Acceptable Use Policy</h3>
-          <p>You agree not to use VegaShare to upload, store, or transmit any content that:</p>
-          <ul style="color: var(--text-2); margin-top: 8px; padding-left: 20px;">
-            <li>Is illegal, harmful, threatening, abusive, or defamatory.</li>
-            <li>Infringes upon any copyright, patent, trademark, or proprietary rights.</li>
-            <li>Contains computer viruses, malware, trojans, or malicious code.</li>
-            <li>Violates the personal privacy or publicity rights of others.</li>
-          </ul>
-        </div>
+          <div class="grid-2">
+            <!-- Email -->
+            <label class="field">
+              <span class="field__label">Email Address *</span>
+              <input type="email" id="contactEmail" placeholder="yourname@example.com" required />
+            </label>
 
-        <div>
-          <h3>4. Automated Purging & Storage Policy</h3>
-          <p>All content uploaded to VegaShare is ephemeral. We reserve the right to immediately and permanently delete any file or text note upon expiry, consumption of download limits, or if flagged for abuse, without notice or liability.</p>
-        </div>
+            <!-- Phone Number -->
+            <label class="field">
+              <span class="field__label">Phone Number *</span>
+              <input type="tel" id="contactPhone" placeholder="+1 (555) 000-0000" required />
+            </label>
+          </div>
 
-        <div>
-          <h3>5. Limitation of Liability</h3>
-          <p>VegaShare is provided on an "AS IS" and "AS AVAILABLE" basis. We make no warranties regarding service availability, data loss, reliability, or security. Users are advised not to use VegaShare as a permanent backup solution.</p>
-        </div>
+          <!-- Subject -->
+          <label class="field">
+            <span class="field__label">Subject *</span>
+            <input type="text" id="contactSubject" placeholder="General Inquiry / Support / Feedback" maxlength="150" required />
+          </label>
 
-        <div>
-          <h3>6. Contact Information</h3>
-          <p>If you have any questions regarding these Terms, please contact us at <a href="mailto:ganeshneeli056@gmail.com" style="color: var(--primary); text-decoration: underline;">neelig552@gmail.com</a>.</p>
-        </div>
+          <!-- Message -->
+          <label class="field">
+            <span class="field__label">Message *</span>
+            <textarea id="contactMessage" rows="5" placeholder="Write your message here..." maxlength="2000" required style="width: 100%; padding: var(--s2); background: var(--bg-2); border: 1px solid var(--border); border-radius: var(--r-md); font-family: inherit; font-size: .93rem; resize: vertical;"></textarea>
+          </label>
+
+          <!-- Submit Button -->
+          <button class="btn btn--primary btn--block ripple" type="submit" id="submitBtn">Send Message</button>
+          
+          <!-- Hint / Status Container -->
+          <p class="hint" id="contactHint" role="status" aria-live="polite"></p>
+        </form>
       </div>
     </div>
   </section>
@@ -120,10 +139,10 @@
       <p>Share files &amp; text. Instantly. Temporary, anonymous, gone when you want it gone.</p>
     </div>
     <nav class="footer__links" aria-label="Footer">
-      <a href="./privacy.html">Privacy</a>
-      <a href="./terms.html">Terms</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="terms.html">Terms</a>
       <a href="https://github.com" target="_blank" rel="noopener noreferrer">GitHub</a>
-      <a href="./contact.html">Contact</a>
+      <a href="contact.html">Contact</a>
     </nav>
   </div>
   <div class="container footer__bottom"><span>© <span id="year">2026</span> VegaShare</span><span>Made for calm sharing.</span></div>
@@ -140,6 +159,9 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<!-- General Page UI Script (Theme, Nav, Ripples) -->
 <script src="js/pages.js" defer></script>
+<!-- Dedicated Security & Form Handling Script -->
+<script src="js/contact.js" defer></script>
 </body>
 </html>

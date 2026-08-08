@@ -1,161 +1,237 @@
-require('dotenv').config();
-const express = require('express');
-const mongoose = require('mongoose');
-const multer = require('multer');
-const cors = require('cors');
-const path = require('path');
+const express = require("express");
+const mongoose = require("mongoose");
+const multer = require("multer");
+const cors = require("cors");
+const path = require("path");
+const rateLimit = require("express-rate-limit");
+require("dotenv").config();
 
+const Share = require("./models/Share");
 const app = express();
-const PORT = process.env.PORT || 3000;
 
-// --- 1. Middleware ---
+// Enable trust proxy for Render (Required for rate limiter to correctly identify client IPs)
+app.set("trust proxy", 1);
+
+// Middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Serve static frontend files
 app.use(express.static(path.join(__dirname)));
 
-// --- 2. MongoDB Connection ---
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('✅ Connected to MongoDB'))
-  .catch(err => console.error('❌ MongoDB connection error:', err));
-
-// --- 3. Schema Setup ---
-const itemSchema = new mongoose.Schema({
-  code: { type: String, required: true, unique: true },
-  type: { type: String, required: true, enum: ['text', 'file'] },
-  content: { type: String },           
-  fileData: { type: Buffer },          
-  fileName: { type: String },
-  mimeType: { type: String },
-  downloadCount: { type: Number, default: 0 }, 
-  createdAt: { type: Date, default: Date.now, index: { expires: '30m' } } 
+// ----------------------------------------------------
+// SECURITY: RATE LIMITERS (Prevents Brute-Force & DoS)
+// ----------------------------------------------------
+// Strict limiter for retrieval (Prevents 4-digit PIN brute-forcing)
+const retrieveLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 15, // Max 15 attempts per IP per window
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many retrieval attempts. Please wait 15 minutes." },
 });
 
-const Item = mongoose.model('Item', itemSchema);
+// General limiter for upload creation
+const shareLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20, // Max 20 shares created per IP per window
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Upload limit reached. Please try again later." },
+});
 
-// --- 4. Multer Configuration ---
-const upload = multer({ 
+// 100% In-Memory Upload Config (Zero local disk usage)
+const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 15 * 1024 * 1024 } // 15MB Limit
+  limits: { fileSize: 15 * 1024 * 1024 }, // 15MB strict limit
 });
 
-// Helper: Generate a unique 4-digit code
+// Helper: Code Generator Fallback
 async function generateUniqueCode() {
   let code;
-  let isUnique = false;
-  while (!isUnique) {
+  let exists = true;
+  let attempts = 0;
+  while (exists && attempts < 10) {
     code = Math.floor(1000 + Math.random() * 9000).toString();
-    const existing = await Item.findOne({ code });
-    if (!existing) isUnique = true;
+    const found = await Share.findOne({ code });
+    if (!found) exists = false;
+    attempts++;
   }
+  if (exists) throw new Error("Unable to generate unique PIN code. Try again.");
   return code;
 }
 
-// --- 5. API Routes ---
+// ----------------------------------------------------
+// KEEP-ALIVE & HEALTH CHECK (Prevents Render Idle Sleep)
+// ----------------------------------------------------
+app.get("/api/health", (req, res) => {
+  res.status(200).send("OK");
+});
 
-// Keep-alive endpoint
-app.get('/ping', (req, res) => res.status(200).send('pong'));
+const SERVER_URL = process.env.RENDER_EXTERNAL_URL;
+if (SERVER_URL) {
+  const PING_INTERVAL = 14 * 60 * 1000; // Ping every 14 minutes
+  setInterval(async () => {
+    try {
+      await fetch(`${SERVER_URL}/api/health`);
+      console.log("[Keep-Alive] Server self-ping successful.");
+    } catch (err) {
+      console.error("[Keep-Alive] Ping failed:", err.message);
+    }
+  }, PING_INTERVAL);
+}
 
-// Upload Route
-app.post('/api/upload-item', upload.single('file'), async (req, res) => {
+// ----------------------------------------------------
+// API 1: CREATE SHARE (Receives Encrypted Payloads)
+// ----------------------------------------------------
+app.post("/api/share", shareLimiter, upload.array("files"), async (req, res) => {
   try {
-    const code = await generateUniqueCode();
-    let newItem;
-    
-    if (req.file) {
-      newItem = new Item({
-        code,
-        type: 'file',
-        fileData: req.file.buffer,
-        fileName: req.file.originalname,
-        mimeType: req.file.mimetype
-      });
-    } else if (req.body.text) {
-      newItem = new Item({
-        code,
-        type: 'text',
-        content: req.body.text
-      });
+    const { code, type, textContent, expiryMinutes, maxDownloads, oneTimeAccess, cryptoSalt, cryptoIv } = req.body;
+
+    if (!cryptoSalt || !cryptoIv) {
+      return res.status(400).json({ error: "Missing end-to-end encryption metadata." });
+    }
+
+    // SECURITY: Strictly bound expiry minutes (15 mins to 24 hours max)
+    let minutesToExpiry = parseInt(expiryMinutes, 10) || 15;
+    if (minutesToExpiry < 1 || minutesToExpiry > 1440) {
+      minutesToExpiry = 15;
+    }
+    const expireAt = new Date(Date.now() + minutesToExpiry * 60 * 1000);
+
+    // SECURITY: Strictly bound max downloads (1 to 50 max)
+    let limitDownloads = parseInt(maxDownloads, 10) || 5;
+    if (limitDownloads < 1 || limitDownloads > 50) {
+      limitDownloads = 5;
+    }
+
+    // Code assignment & uniqueness validation
+    let finalCode = code;
+    if (!finalCode || finalCode.length !== 4 || !/^\d{4}$/.test(finalCode)) {
+      finalCode = await generateUniqueCode();
     } else {
-      return res.status(400).json({ success: false, error: 'No data provided' });
+      const existing = await Share.findOne({ code: finalCode });
+      if (existing) {
+        finalCode = await generateUniqueCode();
+      }
     }
 
-    await newItem.save();
-    res.json({ success: true, code });
-  } catch (error) {
-    console.error('Upload Error:', error);
-    res.status(500).json({ success: false, error: 'Internal Server Error' });
-  }
-});
+    const shareData = {
+      code: finalCode,
+      type: type === "text" ? "text" : "files",
+      expireAt,
+      cryptoSalt,
+      cryptoIv,
+      maxDownloads: limitDownloads,
+      oneTimeAccess: oneTimeAccess === "true" || oneTimeAccess === true,
+    };
 
-// STATS ROUTE: Used by the stacking notification cards for live updates
-app.get('/api/get-stats', async (req, res) => {
-  try {
-    const { code } = req.query;
-    // We only select the downloadCount to keep the response fast and small
-    const item = await Item.findOne({ code }, 'downloadCount'); 
-    
-    if (!item) return res.status(404).json({ success: false, error: 'Expired' });
-    
-    res.json({ success: true, downloadCount: item.downloadCount });
-  } catch (error) {
-    res.status(500).json({ success: false });
-  }
-});
-
-// RETRIEVAL ROUTE: Increments the count every time an item is fetched
-app.get('/api/get-item', async (req, res) => {
-  try {
-    const { code } = req.query;
-    if (!code) return res.status(400).json({ success: false, error: 'Code required' });
-
-    // Atomic increment: prevents data loss if multiple people download simultaneously
-    const item = await Item.findOneAndUpdate(
-      { code }, 
-      { $inc: { downloadCount: 1 } }, 
-      { new: true }
-    );
-
-    if (!item) {
-      return res.status(404).json({ success: false, error: 'Item expired or not found' });
-    }
-
-    if (item.type === 'text') {
-      return res.json({ success: true, itemType: 'text', content: item.content });
+    if (shareData.type === "text") {
+      if (!textContent || typeof textContent !== "string") {
+        return res.status(400).json({ error: "Text content cannot be empty." });
+      }
+      shareData.textContent = textContent;
     } else {
-      // Sending file as Base64 for easy handling in the browser
-      const fileBase64 = `data:${item.mimeType};base64,${item.fileData.toString('base64')}`;
-      return res.json({
-        success: true,
-        itemType: 'file',
-        fileName: item.fileName,
-        fileUrl: fileBase64 
-      });
+      if (!req.files || req.files.length === 0) {
+        return res.status(400).json({ error: "No files uploaded." });
+      }
+
+      shareData.files = req.files.map((file) => ({
+        originalName: file.originalname,
+        data: file.buffer,
+        size: file.size,
+        mimetype: file.mimetype,
+      }));
     }
-  } catch (error) {
-    console.error('Retrieval Error:', error);
-    res.status(500).json({ success: false, error: 'Internal Server Error' });
+
+    const newShare = new Share(shareData);
+    await newShare.save();
+
+    res.status(201).json({
+      success: true,
+      code: newShare.code,
+      expireAt: newShare.expireAt,
+      shareLink: `${req.protocol}://${req.get("host")}/#download?code=${newShare.code}`,
+    });
+  } catch (err) {
+    if (err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE") {
+      return res.status(400).json({ error: "File exceeds strict 15 MB limit." });
+    }
+    // SECURITY: Log real error to console, hide internal stack traces from client
+    console.error("Error in /api/share:", err);
+    res.status(500).json({ error: "An error occurred while creating your share link." });
   }
 });
 
-// --- 6. Static Pages & Error Handling ---
+// ----------------------------------------------------
+// API 2: RETRIEVE ENCRYPTED PAYLOAD BY PIN
+// ----------------------------------------------------
+app.post("/api/retrieve", retrieveLimiter, async (req, res) => {
+  try {
+    const { code } = req.body;
 
-app.get('/privacy', (req, res) => res.sendFile(path.join(__dirname, 'privacy.html')));
-app.get('/terms', (req, res) => res.sendFile(path.join(__dirname, 'terms.html')));
-
-// Custom 404 Logic
-app.use((req, res, next) => {
-    if (req.accepts('html') && !req.url.startsWith('/api')) {
-        return res.status(404).sendFile(path.join(__dirname, '404.html'));
+    if (!code || typeof code !== "string" || !/^\d{4}$/.test(code)) {
+      return res.status(400).json({ error: "Enter a valid 4-digit numeric PIN." });
     }
-    next();
+
+    const share = await Share.findOne({ code });
+
+    if (!share) {
+      return res.status(404).json({ error: "Payload expired or PIN code invalid." });
+    }
+
+    // Check if download limit reached
+    if (share.downloadsCount >= share.maxDownloads) {
+      await Share.deleteOne({ _id: share._id });
+      return res.status(410).json({ error: "Download limit reached. Content permanently erased." });
+    }
+
+    share.downloadsCount += 1;
+    await share.save();
+
+    const shouldPurgeNow = share.oneTimeAccess || share.downloadsCount >= share.maxDownloads;
+
+    res.json({
+      success: true,
+      type: share.type,
+      cryptoSalt: share.cryptoSalt,
+      cryptoIv: share.cryptoIv,
+      textContent: share.type === "text" ? share.textContent : null,
+      files:
+        share.type === "files"
+          ? share.files.map((f) => ({
+              originalName: f.originalName,
+              size: f.size,
+              mimetype: f.mimetype,
+              data: f.data.toString("hex"),
+            }))
+          : null,
+      downloadsRemaining: share.maxDownloads - share.downloadsCount,
+      expireAt: share.expireAt,
+    });
+
+    if (shouldPurgeNow) {
+      await Share.deleteOne({ _id: share._id });
+    }
+  } catch (err) {
+    // SECURITY: Safe error handling
+    console.error("Error in /api/retrieve:", err);
+    res.status(500).json({ error: "An error occurred while retrieving content." });
+  }
 });
 
-// Single Page Application Fallback
-app.use((req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+// Catch-all route for single page app routing
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// --- 7. Start Server ---
-app.listen(PORT, () => {
-  console.log(`🚀 VegaShare active on port ${PORT}`);
-});
+// Database & Server Startup
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log("Connected to MongoDB Atlas successfully.");
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => console.log(`VegaShare is live on http://localhost:${PORT}`));
+  })
+  .catch((err) => console.error("Database connection error:", err.message));
