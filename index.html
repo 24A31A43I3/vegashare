@@ -1,21 +1,68 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>VegaShare — Share Files & Text. Instantly.</title>
-<meta name="description" content="VegaShare is a premium temporary anonymous file and text sharing platform. Share files or text notes instantly with secure 4-digit codes." />
-<meta name="theme-color" content="#FAFAFB" />
-<meta property="og:title" content="VegaShare — Share Files & Text. Instantly." />
-<meta property="og:description" content="Upload files or paste text, get a secure 4-digit code, share it. Auto-deletes after expiry." />
-<meta property="og:type" content="website" />
-<meta name="twitter:card" content="summary_large_image" />
-<link rel="icon" href="/favicon.ico" type="image/x-icon" />
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-<link href="https://api.fontshare.com/v2/css?f[]=general-sans@500,600,700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="./style.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  
+  <!-- Primary Enterprise SEO Meta Tags -->
+  <title>VegaShare — Encrypted File Sharing, Text Notes & Free PDF/Image Compressor</title>
+  <meta name="description" content="VegaShare is an enterprise temporary file transfer and online media compression suite. Share anonymous files/text with 4-digit codes, and compress PNG, JPEG, WebP, and PDF documents down to custom KB targets like 40 KB." />
+  <meta name="keywords" content="file sharing, online image compressor, compress image to 40kb, compress pdf online, anonymous file transfer, temporary text share, 4-digit code drop, zero trace file share" />
+  <meta name="author" content="VegaShare" />
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+  <link rel="canonical" href="https://vegashare.online/" />
+  <meta name="theme-color" content="#FAFAFB" />
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://vegashare.online/" />
+  <meta property="og:title" content="VegaShare — Encrypted File Sharing & Image/PDF Compressor" />
+  <meta property="og:description" content="Upload files, paste text notes, or compress PDFs and images instantly down to exact KB targets. Retrieve shared content via 4-digit codes with total privacy." />
+  <meta property="og:image" content="https://vegashare.online/assets/og-image.png" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:url" content="https://vegashare.online/" />
+  <meta name="twitter:title" content="VegaShare — Encrypted File Sharing & Image/PDF Compressor" />
+  <meta name="twitter:description" content="Upload files, paste text notes, or compress PDFs and images instantly down to exact KB limits." />
+  <meta name="twitter:image" content="https://vegashare.online/assets/og-image.png" />
+
+  <!-- Schema.org JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://vegashare.online/#website",
+        "url": "https://vegashare.online/",
+        "name": "VegaShare",
+        "description": "Instant encrypted file & text sharing with built-in client-side PDF and Image compression tools.",
+        "inLanguage": "en-US"
+      },
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://vegashare.online/#application",
+        "name": "VegaShare Utility Suite",
+        "operatingSystem": "All",
+        "applicationCategory": "UtilitiesApplication",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "description": "Encrypted temporary file sharing platform featuring online PDF/Image compression tools down to custom KB targets."
+      }
+    ]
+  }
+  </script>
+
+  <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://api.fontshare.com/v2/css?f[]=general-sans@500,600,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
@@ -34,7 +81,10 @@
       <a href="#home">Home</a>
       <a href="#upload">Share</a>
       <a href="#download">Retrieve</a>
-      <a href="#about">About</a>
+      <a href="#compressor">Compressor</a>
+      <a href="#how-it-works">How It Works</a>
+      <a href="#about">Features</a>
+      <a href="#faq">FAQ</a>
     </nav>
 
     <div class="nav__actions">
@@ -55,7 +105,9 @@
     <a href="#home">Home</a>
     <a href="#upload">Share</a>
     <a href="#download">Retrieve</a>
-    <a href="#about">About</a>
+    <a href="#compressor">Compressor</a>
+    <a href="#how-it-works">How It Works</a>
+    <a href="#about">Features</a>
     <a href="#faq">FAQ</a>
   </nav>
 </div>
@@ -67,17 +119,17 @@
     <div class="blobs" aria-hidden="true"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span></div>
     <div class="container hero__inner">
       <div class="hero__copy reveal">
-        <span class="pill"><i class="dot"></i> No account. End-to-end encrypted. Auto-deleted.</span>
-        <h1>Share files &amp;<br /><span class="grad">Text Instantly.</span></h1>
-        <p class="lead">Transfer files or paste text notes anonymously. Get a quick 4-digit retrieval code and let it vanish when you want.</p>
+        <span class="pill"><i class="dot"></i> Anonymous. Encrypted. Zero digital footprint.</span>
+        <h1>Secure File Sharing &amp;<br /><span class="grad">Text Instantly.</span></h1>
+        <p class="lead">Transfer documents, images, code snippets, or clipboard notes. Compress 5MB images down to 40KB or shrink PDFs directly in your browser with zero data leakage.</p>
         <div class="hero__btns">
-          <a class="btn btn--primary ripple" href="#upload">Share Now</a>
-          <a class="btn btn--ghost ripple" href="#download">Retrieve Code</a>
+          <a class="btn btn--primary ripple" href="#upload">Share Content</a>
+          <a class="btn btn--ghost ripple" href="#compressor">Compress Media</a>
         </div>
         <ul class="hero__stats">
-          <li><strong>15MB</strong><span>Files limit</span></li>
-          <li><strong>Text/Notes</strong><span>Instant share</span></li>
-          <li><strong>4-digit</strong><span>Secure code</span></li>
+          <li><strong>200MB</strong><span>Sharing limit</span></li>
+          <li><strong>40 KB Target</strong><span>Precision Compressor</span></li>
+          <li><strong>4-digit</strong><span>Secure PIN</span></li>
         </ul>
       </div>
 
@@ -91,8 +143,8 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
               </span>
               <h3>Sponsored Content</h3>
-              <p>Reserve this premium large ad unit for direct sponsorship banners.</p>
-              <a href="mailto:neelig552@gmail.com" class="btn btn--ghost ripple">Partner With Us</a>
+              <p>Reserve this premium large ad unit for Google AdSense or direct brand partnerships.</p>
+              <a href="contact.html" class="btn btn--ghost ripple">Partner With Us</a>
             </div>
           </div>
         </div>
@@ -105,13 +157,13 @@
     <div class="container narrow">
       <header class="sec-head reveal">
         <span class="eyebrow">Share Content</span>
-        <h2>Files or Text. Drop it. Forget it.</h2>
-        <p>Everything is encrypted client-side and purged automatically when expired.</p>
+        <h2>Drop files or paste text notes instantly.</h2>
+        <p>All data is encrypted in transit and permanently purged from memory upon expiry.</p>
       </header>
 
       <div class="card card--upload reveal" id="uploadCard">
         
-        <!-- Mode Switch Tabs (Files vs Text) -->
+        <!-- Mode Switch Tabs -->
         <div class="share-tabs" role="tablist" aria-label="Share options">
           <button class="tab-btn is-active" type="button" id="tabFiles" role="tab" aria-selected="true" aria-controls="paneDrop">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
@@ -123,21 +175,21 @@
           </button>
         </div>
 
-        <!-- Dropzone Pane (Files) -->
+        <!-- Dropzone Pane -->
         <div class="pane" id="paneDrop" role="tabpanel">
           <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Drag and drop files or press Enter to browse files">
             <span class="drop-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M20 16v2a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3v-2"/></svg>
             </span>
             <h3>Drag &amp; drop your files here</h3>
-            <p>or choose multiple files from your device — maximum <strong>15 MB total</strong></p>
+            <p>or choose multiple files from your device — maximum <strong>200 MB total</strong></p>
             <div class="drop-actions">
               <button class="btn btn--primary ripple" type="button" id="browseBtn">Browse Files</button>
+              <button class="btn btn--ghost ripple" type="button" id="pasteBtn">Paste from Clipboard</button>
             </div>
             <input class="sr-only" type="file" id="fileInput" multiple aria-label="Choose files to upload" />
           </div>
 
-          <!-- File List Preview -->
           <div class="file-preview-wrap" id="filePreview" hidden>
             <div class="file-preview-head">
               <strong id="fileSummary">0 files selected</strong>
@@ -179,7 +231,7 @@
               <label class="field">
                 <span class="field__label">Storage time</span>
                 <select id="expiry">
-                  <option value="15" selected>15 Minutes (Default)</option>
+                  <option value="15" selected>15 Minutes</option>
                   <option value="30">30 Minutes</option>
                   <option value="60">1 Hour</option>
                   <option value="360">6 Hours</option>
@@ -198,8 +250,16 @@
                 </select>
               </label>
             </div>
+            <label class="field">
+              <span class="field__label">Password protection <em>(optional)</em></span>
+              <input type="password" id="password" placeholder="Add a password" autocomplete="new-password" />
+            </label>
             <div class="switch-row">
-              <div><strong>One-time access</strong><small>Destroy immediately after first download/view</small></div>
+              <div><strong>Generate QR code</strong><small>Show a scannable code with the retrieval pin</small></div>
+              <button class="switch is-on" type="button" id="qrToggle" role="switch" aria-checked="true" aria-label="Generate QR code"><i></i></button>
+            </div>
+            <div class="switch-row">
+              <div><strong>One-time access</strong><small>Destroy after first download/view</small></div>
               <button class="switch" type="button" id="onceToggle" role="switch" aria-checked="false" aria-label="One-time download"><i></i></button>
             </div>
           </div>
@@ -215,7 +275,14 @@
             <span class="file-ico spin-soft">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M20 16v2a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3v-2"/></svg>
             </span>
-            <div class="file-info"><strong id="progName">Encrypting &amp; Uploading Payload</strong><small id="progSize">AES-256 Encryption in Progress</small></div>
+            <div class="file-info"><strong id="progName">Processing Content</strong><small id="progSize">—</small></div>
+            <span class="pct" id="progPct">0%</span>
+          </div>
+          <div class="bar"><span id="progBar"></span></div>
+          <div class="prog-meta">
+            <span>Speed <strong id="progSpeed">—</strong></span>
+            <span>ETA <strong id="progEta">—</strong></span>
+            <button class="btn btn--danger-soft ripple btn--sm" type="button" id="cancelUpload">Cancel</button>
           </div>
         </div>
 
@@ -225,22 +292,18 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 12.5 5 5L20 7"/></svg>
           </span>
           <h3>Your content is ready to share!</h3>
-          <p class="muted">Share the code or link below. It disappears when the timer runs out.</p>
+          <p class="muted">Share the retrieval code below. It disappears when the timer runs out.</p>
 
           <div class="code-box">
             <span class="code-label">Retrieval code</span>
-            <div class="code-digits" id="codeDigits"><b>0</b><b>0</b><b>0</b><b>0</b></div>
+            <div class="code-digits" id="codeDigits"><b>4</b><b>8</b><b>3</b><b>1</b></div>
             <button class="btn btn--ghost btn--sm ripple" type="button" data-copy="code">Copy code</button>
-          </div>
-
-          <div class="share-row">
-            <input type="text" id="shareLink" readonly aria-label="Share link" value="" />
-            <button class="btn btn--primary ripple" type="button" data-copy="link">Copy Link</button>
           </div>
 
           <div class="success-grid">
             <div class="mini"><span>Expires in</span><strong id="expiresIn">15 Minutes</strong></div>
             <div class="mini"><span>Remaining access</span><strong id="remDl">5 / 5</strong></div>
+            <div class="mini mini--qr" id="qrWrap"><div class="art-qr" role="img" aria-label="QR code for retrieval code"></div><span>Scan to access</span></div>
           </div>
 
           <button class="btn btn--ghost ripple" type="button" id="newUpload">Share something else</button>
@@ -254,9 +317,9 @@
   <section class="section section--alt" id="download">
     <div class="container narrow">
       <header class="sec-head reveal">
-        <span class="eyebrow">Retrieve</span>
-        <h2>Got a code? Get your content.</h2>
-        <p>Enter the 4-digit retrieval code you received.</p>
+        <span class="eyebrow">Retrieve Content</span>
+        <h2>Got a code? Access your files or text.</h2>
+        <p>Enter the 4-digit retrieval code provided by the sender.</p>
       </header>
 
       <div class="card card--download reveal">
@@ -272,31 +335,25 @@
           <p class="hint" id="dlHint" role="status" aria-live="polite"></p>
         </form>
 
-        <!-- Dynamic Preview / Display Card for Retrieved Item -->
         <div class="preview-card" id="previewCard" hidden>
-          <!-- Display File Payload -->
           <div id="retrievedFileContent">
             <div class="prev-top">
               <span class="file-ico file-ico--lg">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
               </span>
-              <div class="file-info">
-                <strong id="retrievedFileName">Loading...</strong>
-                <small id="retrievedFileSize">—</small>
-              </div>
+              <div class="file-info"><strong id="retrievedFileName">shared-files.zip</strong><small id="retrievedFileSize">18.4 MB · Zip Archive</small></div>
             </div>
             <dl class="prev-meta">
-              <div><dt>Expires at</dt><dd id="retrievedExpiry">—</dd></div>
-              <div><dt>Remaining downloads</dt><dd id="retrievedRemDl">—</dd></div>
+              <div><dt>Expires at</dt><dd id="retrievedExpiry">12 minutes</dd></div>
+              <div><dt>Remaining downloads</dt><dd id="retrievedRemDl">4 / 5</dd></div>
             </dl>
-            <button class="btn btn--primary btn--block btn--lg ripple" type="button" id="downloadFileBtn">Download File</button>
+            <button class="btn btn--primary btn--block btn--lg ripple" type="button" id="downloadFileBtn">Download Files</button>
           </div>
 
-          <!-- Display Text Payload -->
           <div id="retrievedTextContent" hidden>
             <div class="retrieved-text-box">
               <div class="retrieved-text-head">
-                <strong>Encrypted Text Note</strong>
+                <strong>Text Note</strong>
                 <button class="btn btn--primary btn--sm ripple" type="button" id="copyRetrievedText">Copy Text</button>
               </div>
               <textarea readonly id="retrievedTextVal" rows="5"></textarea>
@@ -308,26 +365,208 @@
     </div>
   </section>
 
-  <!-- ============ FEATURES ============ -->
-  <section class="section" id="about">
-    <div class="container">
+  <!-- ============ IMAGE & PDF COMPRESSOR WITH SLIDING KB WINDOW ============ -->
+  <section class="section" id="compressor">
+    <div class="container narrow">
       <header class="sec-head reveal">
-        <span class="eyebrow">Features</span>
-        <h2>Built for speed, privacy and calm.</h2>
-        <p>Everything you need for effortless sharing — nothing you don't.</p>
+        <span class="eyebrow">Smart Media Utility</span>
+        <h2>Free Online Image &amp; PDF Compressor</h2>
+        <p>Target custom file sizes in kilobytes (KB) directly in your browser. Easily compress 5MB photos down to 40 KB for portal uploads.</p>
       </header>
-      <div class="features" id="features"></div>
+
+      <div class="card card--upload reveal" id="compressorCard">
+        
+        <!-- Compressor Mode Switch Tabs -->
+        <div class="share-tabs" role="tablist" aria-label="Compressor Mode">
+          <button class="tab-btn is-active" type="button" id="tabCompImg" role="tab" aria-selected="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            <span>Compress Images (PNG/JPG/WebP)</span>
+          </button>
+          <button class="tab-btn" type="button" id="tabCompPdf" role="tab" aria-selected="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M10 12h4"/><path d="M10 16h4"/></svg>
+            <span>Compress PDF Documents</span>
+          </button>
+        </div>
+
+        <!-- Dynamic KB Target Slider & Controls -->
+        <div style="background: var(--bg-surface); padding: 18px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border-color);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <label for="targetKbRange" style="font-weight: 600; font-size: 0.95rem;">
+              Target File Size Limit: <span id="targetKbDisplay" style="color: var(--primary); font-size: 1.1rem; font-weight: 700;">40 KB</span>
+            </label>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <input type="number" id="targetKbInput" min="10" max="15000" value="40" style="width: 90px; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-color); text-align: right; font-weight: 600;" aria-label="Target size in KB" />
+              <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">KB</span>
+            </div>
+          </div>
+
+          <!-- Sliding Window Range Control -->
+          <input type="range" id="targetKbRange" min="10" max="5000" step="10" value="40" style="width: 100%; height: 6px; cursor: pointer; accent-color: var(--primary);" aria-label="Target size KB slider" />
+          
+          <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-top: 6px;">
+            <span>10 KB (Extreme)</span>
+            <span>40 KB (Portal Limit)</span>
+            <span>1,000 KB (1 MB)</span>
+            <span>5,000 KB (5 MB)</span>
+          </div>
+        </div>
+
+        <!-- Output Format Selector -->
+        <div class="grid-2" style="margin-bottom: 20px;">
+          <label class="field">
+            <span class="field__label">Output Format</span>
+            <select id="outputFormat">
+              <option value="webp" selected>Convert to WebP (Recommended for 40KB Target)</option>
+              <option value="jpg">Convert to JPEG</option>
+              <option value="original">Keep Original Format</option>
+            </select>
+          </label>
+          <label class="field">
+            <span class="field__label">Target Quality Strategy</span>
+            <select id="qualityStrategy">
+              <option value="auto" selected>Auto Binary-Search Quality Target</option>
+              <option value="strict">Strict Resolution Downscaling</option>
+            </select>
+          </label>
+        </div>
+
+        <!-- Compressor Dropzone -->
+        <div class="dropzone" id="compressDropzone" tabindex="0" role="button" aria-label="Drag and drop images or PDFs to compress">
+          <span class="drop-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </span>
+          <h3>Select or Drop Media Files Here</h3>
+          <p>Supports <strong>JPEG, PNG, WebP, and PDF</strong> up to 50MB</p>
+          <div class="drop-actions">
+            <button class="btn btn--primary ripple" type="button" id="browseCompressBtn">Choose Files to Compress</button>
+          </div>
+          <input class="sr-only" type="file" id="compressInput" multiple accept="image/jpeg,image/png,image/webp,application/pdf" aria-label="Choose files to compress" />
+        </div>
+
+        <!-- Compressed Output List Container -->
+        <div class="file-preview-wrap" id="compressPreview" hidden style="margin-top: 20px;">
+          <div class="file-preview-head">
+            <strong>Compressed Files</strong>
+            <button class="btn btn--primary btn--sm ripple" type="button" id="downloadAllCompressed">Download All</button>
+          </div>
+          <div class="file-list" id="compressedList"></div>
+        </div>
+
+      </div>
     </div>
   </section>
 
-  <!-- ============ FAQ ============ -->
-  <section class="section section--alt" id="faq">
+  <!-- ============ DEEP DIVE COMPRESSION & SECURITY KNOWLEDGE ============ -->
+  <section class="section section--alt" id="compression-guide">
+    <div class="container">
+      <header class="sec-head reveal">
+        <span class="eyebrow">Deep Dive Technical Knowledge</span>
+        <h2>How Client-Side Image &amp; PDF Compression Works</h2>
+        <p>Discover the engineering principles behind VegaShare's lossy &amp; lossless compression engine.</p>
+      </header>
+
+      <div class="grid-2 reveal" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 28px; margin-top: 32px;">
+        <article class="card" style="padding: 24px;">
+          <h3 style="margin-bottom: 12px; font-size: 1.25rem;">Compressing 5 MB Images to 40 KB Limits</h3>
+          <p style="line-height: 1.6; margin-bottom: 12px;">Squeezing large high-resolution photos down to strict application portal limits (such as 20 KB to 50 KB) requires intelligent dimension re-scaling and quantizing algorithms. VegaShare automatically downsamples giant $4000 \times 3000\text{px}$ canvas spaces while converting colors to modern WebP encoding.</p>
+          <p style="line-height: 1.6;">By performing binary-search iterative compression directly in HTML5 canvas memory, file sizes drop by over $99\%$ while maintaining text and face clarity.</p>
+        </article>
+
+        <article class="card" style="padding: 24px;">
+          <h3 style="margin-bottom: 12px; font-size: 1.25rem;">Client-Side Security &amp; Zero Uploads</h3>
+          <p style="line-height: 1.6; margin-bottom: 12px;">Standard cloud converters require uploading your confidential documents or bank statements to remote servers, creating privacy risks. VegaShare processes your files directly within your browser's local memory using JavaScript vector optimization.</p>
+          <p style="line-height: 1.6;">Your compressed files never touch external servers during media optimization, keeping your private data 100% confidential.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ HOW IT WORKS ============ -->
+  <section class="section" id="how-it-works">
+    <div class="container">
+      <header class="sec-head reveal">
+        <span class="eyebrow">How VegaShare Works</span>
+        <h2>Simple, secure 3-step file sharing.</h2>
+        <p>VegaShare simplifies file transfer by eliminating tedious registration steps, long complex URLs, and persistent tracking cookies.</p>
+      </header>
+
+      <div class="grid-3 reveal" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-top: 32px;">
+        <div class="card" style="padding: 24px;">
+          <div style="font-size: 2rem; font-weight: 700; color: var(--primary); margin-bottom: 12px;">01</div>
+          <h3>Upload or Paste</h3>
+          <p>Select multiple documents, archives, or images up to 200MB, or simply paste formatted text and code snippets into the note box.</p>
+        </div>
+        <div class="card" style="padding: 24px;">
+          <div style="font-size: 2rem; font-weight: 700; color: var(--primary); margin-bottom: 12px;">02</div>
+          <h3>Generate 4-Digit Code</h3>
+          <p>Our backend engine encrypts the payload in transit and issues a memorable 4-digit numerical pin. Configure custom expiration timers or view limits.</p>
+        </div>
+        <div class="card" style="padding: 24px;">
+          <div style="font-size: 2rem; font-weight: 700; color: var(--primary); margin-bottom: 12px;">03</div>
+          <h3>Retrieve & Auto-Purge</h3>
+          <p>The recipient inputs the 4-digit code on any phone or PC to download the files. Once the limit or timer expires, data is shredded permanently.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FEATURES ============ -->
+  <section class="section section--alt" id="about">
+    <div class="container">
+      <header class="sec-head reveal">
+        <span class="eyebrow">Enterprise Features</span>
+        <h2>Built for privacy, speed, and simplicity.</h2>
+        <p>Everything you need for safe cross-device sharing with zero clutter.</p>
+      </header>
+
+      <div class="grid-3 reveal" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px;">
+        <div class="card" style="padding: 24px;">
+          <h3>🔒 Zero Account Required</h3>
+          <p>We do not collect names, email addresses, or personal identifiers. Start sending files or notes immediately without creating an account.</p>
+        </div>
+        <div class="card" style="padding: 24px;">
+          <h3>⚡ Cross-Device Clipboard</h3>
+          <p>Easily bridge text and clipboard content between mobile devices and desktop computers without sending emails to yourself.</p>
+        </div>
+        <div class="card" style="padding: 24px;">
+          <h3>⏱️ Automated Server Purging</h3>
+          <p>All stored content is tied to temporary TTL (Time-To-Live) timers. Once expired, files are unrecoverable and wiped from server memory.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FAQ SECTION ============ -->
+  <section class="section" id="faq">
     <div class="container narrow">
       <header class="sec-head reveal">
-        <span class="eyebrow">FAQ</span>
-        <h2>Questions, answered.</h2>
+        <span class="eyebrow">Frequently Asked Questions</span>
+        <h2>Everything you need to know about VegaShare.</h2>
       </header>
-      <div class="faq" id="faqList"></div>
+
+      <div class="faq-accordion reveal" style="display: flex; flex-direction: column; gap: 16px; margin-top: 32px;">
+        
+        <article class="card" style="padding: 20px;">
+          <h3 style="font-size: 1.1rem; margin-bottom: 8px;">How long are my files stored on VegaShare?</h3>
+          <p>You have full control over file lifespan. Choose storage times ranging from 15 minutes up to 24 hours. You can also configure 'One-Time Access' to instantly delete files after the recipient completes the download.</p>
+        </article>
+
+        <article class="card" style="padding: 20px;">
+          <h3 style="font-size: 1.1rem; margin-bottom: 8px;">How do I compress a 5MB image down to 40KB?</h3>
+          <p>Simply select the Compressor tab, set the target size slider to 40 KB, select WebP or JPEG format, and upload your file. Our engine downscales dimensions and tunes quality to fit your target byte size.</p>
+        </article>
+
+        <article class="card" style="padding: 20px;">
+          <h3 style="font-size: 1.1rem; margin-bottom: 8px;">Are my compressed images uploaded to external servers?</h3>
+          <p>No! Unlike conventional cloud converters, VegaShare processes PDF and image compression entirely inside your web browser. Your files never touch our servers during compression, ensuring 100% confidentiality.</p>
+        </article>
+
+        <article class="card" style="padding: 20px;">
+          <h3 style="font-size: 1.1rem; margin-bottom: 8px;">What is the file size limit for uploads?</h3>
+          <p>VegaShare allows single or batch file uploads up to 200MB per session completely free of charge. For text notes and clipboard transfers, there is virtually no limitation.</p>
+        </article>
+
+      </div>
     </div>
   </section>
 </main>
@@ -342,16 +581,16 @@
         </span>
         <span class="brand__text">Vega<span>Share</span></span>
       </a>
-      <p>Share files &amp; text. Instantly. Temporary, anonymous, gone when you want it gone.</p>
+      <p>Share files &amp; text instantly. Temporary, anonymous file sharing and client-side PDF/Image compression tool.</p>
     </div>
     <nav class="footer__links" aria-label="Footer">
-      <a href="privacy.html">Privacy</a>
-      <a href="terms.html">Terms</a>
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="terms.html">Terms of Service</a>
       <a href="https://github.com" target="_blank" rel="noopener noreferrer">GitHub</a>
-      <a href="contact.html">Contact</a>
+      <a href="contact.html">Contact Us</a>
     </nav>
   </div>
-  <div class="container footer__bottom"><span>© <span id="year">2026</span> VegaShare</span><span>Made for calm sharing.</span></div>
+  <div class="container footer__bottom"><span>© <span id="year">2026</span> VegaShare. All rights reserved.</span><span>Made for secure, calm sharing.</span></div>
 </footer>
 
 <!-- ============ MOBILE BOTTOM NAV ============ -->
@@ -359,8 +598,8 @@
   <a href="#home" class="is-active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m3 10 9-7 9 7v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span>Home</span></a>
   <a href="#download"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4v12"/><path d="m7 11 5 5 5-5"/><path d="M4 20h16"/></svg><span>Retrieve</span></a>
   <a href="#upload" class="fab" aria-label="Share content"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></a>
+  <a href="#compressor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Compress</span></a>
   <a href="#faq"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.3"/><path d="M12 17h.01"/></svg><span>FAQ</span></a>
-  <a href="#about"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span>More</span></a>
 </nav>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
