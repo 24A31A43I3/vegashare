@@ -1,0 +1,18 @@
+# Webmaster Governance for Vegashare.online
+User-agent: *
+Allow: /
+Allow: /index.html
+Allow: /privacy.html
+Allow: /terms.html
+Allow: /contact.html
+Allow: /sitemap.xml
+
+# Block API Endpoints and Dynamic Upload Streams
+Disallow: /api/
+Disallow: /v/
+Disallow: /temp/
+Disallow: /download?code=*
+Disallow: /#download?code=*
+
+# Specify Sitemap Location
+Sitemap: https://vegashare.online/sitemap.xml
